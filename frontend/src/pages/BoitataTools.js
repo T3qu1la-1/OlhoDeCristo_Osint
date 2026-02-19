@@ -4,6 +4,76 @@ import './Boitata.css';
 
 const BoitataTools = () => {
   const [selectedTool, setSelectedTool] = useState('ghacking');
+  const [clickjackingUrl, setClickjackingUrl] = useState('');
+  const [clickjackingResult, setClickjackingResult] = useState(null);
+  const [testing, setTesting] = useState(false);
+
+  const testClickjacking = () => {
+    if (!clickjackingUrl.trim()) {
+      alert('Por favor, insira uma URL válida');
+      return;
+    }
+
+    setTesting(true);
+    setClickjackingResult(null);
+
+    // Tentar carregar o site em um iframe invisível
+    const testFrame = document.createElement('iframe');
+    testFrame.style.display = 'none';
+    testFrame.src = clickjackingUrl;
+    
+    let vulnerable = true;
+
+    testFrame.onerror = () => {
+      vulnerable = false;
+      setClickjackingResult({
+        status: 'protected',
+        message: 'Site PROTEGIDO contra Clickjacking',
+        details: 'O site bloqueou o carregamento em iframe (X-Frame-Options ou CSP está configurado)'
+      });
+      setTesting(false);
+      document.body.removeChild(testFrame);
+    };
+
+    testFrame.onload = () => {
+      try {
+        // Tentar acessar o conteúdo do iframe
+        const iframeDoc = testFrame.contentDocument || testFrame.contentWindow.document;
+        
+        setClickjackingResult({
+          status: 'vulnerable',
+          message: 'Site VULNERÁVEL a Clickjacking!',
+          details: 'O site carregou dentro do iframe sem restrições. Headers de proteção não estão configurados.'
+        });
+      } catch (e) {
+        setClickjackingResult({
+          status: 'protected',
+          message: 'Site PROTEGIDO contra Clickjacking',
+          details: 'O site bloqueou o acesso ao conteúdo do iframe (same-origin policy ou headers de segurança)'
+        });
+      }
+      
+      setTesting(false);
+      document.body.removeChild(testFrame);
+    };
+
+    document.body.appendChild(testFrame);
+
+    // Timeout de 10 segundos
+    setTimeout(() => {
+      if (testing) {
+        try {
+          document.body.removeChild(testFrame);
+        } catch (e) {}
+        setClickjackingResult({
+          status: 'timeout',
+          message: 'Timeout ao testar',
+          details: 'O site demorou muito para responder. Pode estar bloqueado por firewall ou offline.'
+        });
+        setTesting(false);
+      }
+    }, 10000);
+  };
 
   const tools = {
     ghacking: {
