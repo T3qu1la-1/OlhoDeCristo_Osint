@@ -10,6 +10,7 @@ from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone
 from scanner import VulnerabilityScanner
+from advanced_scanner import AdvancedVulnerabilityScanner
 import asyncio
 
 
