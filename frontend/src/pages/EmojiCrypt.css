@@ -1,0 +1,254 @@
+.emoji-crypt {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  color: var(--primary);
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.page-header p {
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.mode-toggle button {
+  padding: 15px 30px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.mode-toggle button:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.mode-toggle button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #000;
+}
+
+.crypt-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 30px;
+  margin-bottom: 40px;
+}
+
+.crypt-section {
+  margin-bottom: 30px;
+}
+
+.crypt-section h3 {
+  color: var(--text-bright);
+  margin-bottom: 15px;
+  letter-spacing: 1px;
+}
+
+.crypt-section textarea {
+  width: 100%;
+  padding: 15px;
+  background: var(--bg-darker);
+  border: 2px solid var(--border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1.1rem;
+  resize: vertical;
+  transition: all 0.3s;
+}
+
+.crypt-section textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 255, 65, 0.1);
+}
+
+.char-count {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.crypt-actions {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.btn-process,
+.btn-clear {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.btn-process {
+  background: var(--primary);
+  color: #000;
+}
+
+.btn-process:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.btn-clear {
+  background: transparent;
+  border: 2px solid var(--border);
+  color: var(--text);
+}
+
+.btn-clear:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-copy {
+  width: 100%;
+  padding: 12px;
+  background: var(--secondary);
+  border: none;
+  color: #000;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-top: 10px;
+}
+
+.btn-copy:hover {
+  background: #0088ee;
+  transform: translateY(-2px);
+}
+
+.info-box {
+  background: rgba(0, 255, 65, 0.05);
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  padding: 30px;
+  margin-bottom: 40px;
+}
+
+.info-box h3 {
+  color: var(--primary);
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.info-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 20px;
+}
+
+.info-card h4 {
+  color: var(--text-bright);
+  margin-bottom: 10px;
+}
+
+.info-card p {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.emoji-legend {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 30px;
+}
+
+.emoji-legend h3 {
+  color: var(--primary);
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 15px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: var(--bg-darker);
+  border: 1px solid var(--border);
+}
+
+.legend-item .char {
+  color: var(--text-bright);
+  font-weight: 700;
+}
+
+.legend-item .arrow {
+  color: var(--text-dim);
+}
+
+.legend-item .emoji {
+  font-size: 1.3rem;
+}
+
+@media (max-width: 768px) {
+  .emoji-crypt {
+    padding: 20px;
+  }
+  
+  .mode-toggle {
+    flex-direction: column;
+  }
+  
+  .crypt-actions {
+    flex-direction: column;
+  }
+}
