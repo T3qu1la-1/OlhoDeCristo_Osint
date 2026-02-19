@@ -166,7 +166,7 @@ async def run_scan(scan_id: str, target: str, scan_type: str):
         })
         
         # Executar scan
-        scanner = VulnerabilityScanner(ws_manager)
+        scanner = AdvancedVulnerabilityScanner(ws_manager)
         
         async def status_callback(update):
             await db.scans.update_one({"id": scan_id}, {"$set": update})
