@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Search, Activity, AlertTriangle, Lock, Image, Compass } from 'lucide-react';
+import { Shield, Search, Activity, AlertTriangle, Lock, Image, Compass, BookOpen, FileText } from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard = ({ onNavigate }) => {
