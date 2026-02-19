@@ -494,6 +494,16 @@ class CompleteVulnerabilityScanner:
             ("HTTP Parameter Pollution", self.test_http_param_pollution),
             ("Information Disclosure", self.test_info_disclosure),
             ("Sensitive Directories", self.test_sensitive_dirs),
+            ("Clickjacking", self.test_clickjacking),
+            ("Backup Files", self.test_backup_files),
+            ("XML Injection", self.test_xml_injection),
+            ("File Upload Detection", self.test_file_upload),
+            ("IDOR", self.test_idor),
+            ("Brute Force Protection", self.test_brute_force_protection),
+            ("Weak Password Policy", self.test_weak_password_policy),
+            ("Session Fixation", self.test_session_fixation),
+            ("CSRF Protection", self.test_csrf_protection),
+            ("Error Handling", self.test_error_handling),
         ]
         
         async with self:
