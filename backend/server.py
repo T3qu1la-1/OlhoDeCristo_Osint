@@ -51,7 +51,7 @@ ws_manager = WebSocketManager()
 
 # Define Models
 class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
+    model_config = ConfigDict(extra="ignore")
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     client_name: str
@@ -59,6 +59,51 @@ class StatusCheck(BaseModel):
 
 class StatusCheckCreate(BaseModel):
     client_name: str
+
+class ScanCreate(BaseModel):
+    name: str
+    target: str
+    scanType: str = "web"
+
+class Scan(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    target: str
+    scanType: str
+    status: str = "pending"
+    progress: int = 0
+    currentTask: str = "Initializing..."
+    startedAt: Optional[datetime] = None
+    completedAt: Optional[datetime] = None
+    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Vulnerability(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    scan_id: str
+    severity: str
+    title: str
+    description: str
+    category: str
+    endpoint: str
+    payload: str
+    evidence: str
+    recommendation: str
+    cve: Optional[str] = None
+    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Report(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    scanId: str
+    title: str
+    format: str = "txt"
+    content: str
+    createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
