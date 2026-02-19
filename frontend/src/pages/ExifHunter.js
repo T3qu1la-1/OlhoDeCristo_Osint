@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Image as ImageIcon, Upload, FileSearch, Trash2, Download, ExternalLink } from 'lucide-react';
+import { Image as ImageIcon, Upload, FileSearch, Trash2, ExternalLink, CheckCircle } from 'lucide-react';
+import EXIF from 'exif-js';
 import './ExifHunter.css';
 
 const ExifHunter = () => {
@@ -8,6 +9,7 @@ const ExifHunter = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [fotoForensicsUrl, setFotoForensicsUrl] = useState('');
+  const [exifData, setExifData] = useState(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -18,7 +20,89 @@ const ExifHunter = () => {
         setImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
+      setExifData(null);
     }
+  };
+
+  const extractLocalExif = () => {
+    if (!imageFile) {
+      alert('Por favor, faça upload de uma imagem primeiro');
+      return;
+    }
+
+    setLoading(true);
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      
+      img.onload = () => {
+        EXIF.getData(img, function() {
+          const allTags = EXIF.getAllTags(this);
+          
+          const extractedData = {
+            'Nome do Arquivo': imageFile.name,
+            'Tipo': imageFile.type,
+            'Tamanho': `${(imageFile.size / 1024).toFixed(2)} KB`,
+            'Última Modificação': new Date(imageFile.lastModified).toLocaleString('pt-BR'),
+            'Dimensões': `${img.width} x ${img.height} pixels`,
+          };
+
+          // EXIF Tags
+          if (allTags.Make) extractedData['Fabricante'] = allTags.Make;
+          if (allTags.Model) extractedData['Modelo da Câmera'] = allTags.Model;
+          if (allTags.DateTime) extractedData['Data/Hora Original'] = allTags.DateTime;
+          if (allTags.DateTimeOriginal) extractedData['Data/Hora de Captura'] = allTags.DateTimeOriginal;
+          if (allTags.Software) extractedData['Software'] = allTags.Software;
+          if (allTags.Orientation) extractedData['Orientação'] = allTags.Orientation;
+          
+          // Camera settings
+          if (allTags.FNumber) extractedData['Abertura (F-stop)'] = `f/${allTags.FNumber}`;
+          if (allTags.ExposureTime) extractedData['Tempo de Exposição'] = `${allTags.ExposureTime} seg`;
+          if (allTags.ISOSpeedRatings) extractedData['ISO'] = allTags.ISOSpeedRatings;
+          if (allTags.FocalLength) extractedData['Distância Focal'] = `${allTags.FocalLength}mm`;
+          if (allTags.Flash) extractedData['Flash'] = allTags.Flash === 0 ? 'Não disparado' : 'Disparado';
+          if (allTags.WhiteBalance) extractedData['Balanço de Branco'] = allTags.WhiteBalance;
+          
+          // GPS Data
+          if (allTags.GPSLatitude && allTags.GPSLongitude) {
+            const lat = convertDMSToDD(allTags.GPSLatitude, allTags.GPSLatitudeRef);
+            const lon = convertDMSToDD(allTags.GPSLongitude, allTags.GPSLongitudeRef);
+            extractedData['GPS Latitude'] = lat.toFixed(6);
+            extractedData['GPS Longitude'] = lon.toFixed(6);
+            extractedData['Localização (Google Maps)'] = `https://www.google.com/maps?q=${lat},${lon}`;
+          }
+          
+          if (allTags.GPSAltitude) extractedData['Altitude GPS'] = `${allTags.GPSAltitude}m`;
+          
+          // Copyright and Author
+          if (allTags.Copyright) extractedData['Copyright'] = allTags.Copyright;
+          if (allTags.Artist) extractedData['Autor'] = allTags.Artist;
+          
+          // Additional info
+          if (allTags.ImageDescription) extractedData['Descrição'] = allTags.ImageDescription;
+          if (allTags.LensModel) extractedData['Modelo da Lente'] = allTags.LensModel;
+
+          if (Object.keys(extractedData).length <= 5) {
+            extractedData['⚠️ Aviso'] = 'Poucos metadados EXIF encontrados. A imagem pode ter sido processada ou não possui dados EXIF.';
+          }
+
+          setExifData(extractedData);
+          setLoading(false);
+        });
+      };
+    };
+    
+    reader.readAsDataURL(imageFile);
+  };
+
+  const convertDMSToDD = (dms, ref) => {
+    let dd = dms[0] + dms[1]/60 + dms[2]/3600;
+    if (ref === 'S' || ref === 'W') {
+      dd = dd * -1;
+    }
+    return dd;
   };
 
   const analyzeWithFotoForensics = () => {
@@ -29,29 +113,12 @@ const ExifHunter = () => {
     
     setLoading(true);
     
-    // FotoForensics aceita URLs diretamente
     const forensicsUrl = `https://fotoforensics.com/analysis.php?id=${encodeURIComponent(imageUrl)}&fmt=ela`;
     setFotoForensicsUrl(forensicsUrl);
     
-    // Abrir em nova aba
     window.open(forensicsUrl, '_blank');
     
     setTimeout(() => setLoading(false), 1000);
-  };
-
-  const analyzeUploadedImage = async () => {
-    if (!imageFile) {
-      alert('Por favor, faça upload de uma imagem primeiro');
-      return;
-    }
-
-    setLoading(true);
-    
-    // Para imagens locais, precisamos upload para algum servidor público
-    // Ou usar a URL da imagem se estiver hospedada
-    alert('📌 Para análise completa, hospede sua imagem online e use a opção "Analisar por URL".\n\nOu abra https://fotoforensics.com e faça upload manualmente.');
-    
-    setLoading(false);
   };
 
   const clear = () => {
@@ -59,6 +126,29 @@ const ExifHunter = () => {
     setImagePreview(null);
     setImageUrl('');
     setFotoForensicsUrl('');
+    setExifData(null);
+  };
+
+  const downloadReport = () => {
+    if (!exifData) return;
+    
+    let report = 'EXIF HUNTER - RELATÓRIO DE METADADOS\n';
+    report += '='.repeat(50) + '\n\n';
+    
+    Object.entries(exifData).forEach(([key, value]) => {
+      report += `${key}: ${value}\n`;
+    });
+    
+    report += '\n' + '='.repeat(50) + '\n';
+    report += 'Relatório gerado por: OLHOS DE DEUS - EXIF Hunter\n';
+    report += `Data: ${new Date().toLocaleString('pt-BR')}\n`;
+    
+    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `exif_report_${Date.now()}.txt`;
+    a.click();
   };
 
   return (
