@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Image as ImageIcon, Upload, FileSearch, Trash2, Download } from 'lucide-react';
+import { Image as ImageIcon, Upload, FileSearch, Trash2, Download, ExternalLink } from 'lucide-react';
 import './ExifHunter.css';
 
 const ExifHunter = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [metadata, setMetadata] = useState(null);
+  const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fotoForensicsUrl, setFotoForensicsUrl] = useState('');
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -20,59 +21,44 @@ const ExifHunter = () => {
     }
   };
 
-  const extractMetadata = async () => {
-    if (!imageFile) return;
+  const analyzeWithFotoForensics = () => {
+    if (!imageUrl.trim()) {
+      alert('Por favor, insira uma URL de imagem válida');
+      return;
+    }
     
     setLoading(true);
     
-    // Simulação de extração de metadados (frontend-only)
-    // Em produção, usar biblioteca como exif-js ou enviar para backend
-    setTimeout(() => {
-      setMetadata({
-        'Nome do Arquivo': imageFile.name,
-        'Tipo': imageFile.type,
-        'Tamanho': `${(imageFile.size / 1024).toFixed(2)} KB`,
-        'Última Modificação': new Date(imageFile.lastModified).toLocaleString('pt-BR'),
-        
-        // Dados EXIF simulados (em produção, extrair da imagem)
-        'Fabricante': 'Não disponível (requer processamento)',
-        'Modelo': 'Não disponível (requer processamento)',
-        'Data/Hora Original': 'Não disponível (requer processamento)',
-        'GPS Latitude': 'Não disponível (requer processamento)',
-        'GPS Longitude': 'Não disponível (requer processamento)',
-        'Software': 'Não disponível (requer processamento)',
-        'Abertura': 'Não disponível (requer processamento)',
-        'ISO': 'Não disponível (requer processamento)',
-        'Flash': 'Não disponível (requer processamento)',
-        
-        '⚠️ Nota': 'Extração EXIF completa requer biblioteca especializada ou processamento backend. Esta é uma demonstração.'
-      });
-      setLoading(false);
-    }, 1000);
+    // FotoForensics aceita URLs diretamente
+    const forensicsUrl = `https://fotoforensics.com/analysis.php?id=${encodeURIComponent(imageUrl)}&fmt=ela`;
+    setFotoForensicsUrl(forensicsUrl);
+    
+    // Abrir em nova aba
+    window.open(forensicsUrl, '_blank');
+    
+    setTimeout(() => setLoading(false), 1000);
+  };
+
+  const analyzeUploadedImage = async () => {
+    if (!imageFile) {
+      alert('Por favor, faça upload de uma imagem primeiro');
+      return;
+    }
+
+    setLoading(true);
+    
+    // Para imagens locais, precisamos upload para algum servidor público
+    // Ou usar a URL da imagem se estiver hospedada
+    alert('📌 Para análise completa, hospede sua imagem online e use a opção "Analisar por URL".\n\nOu abra https://fotoforensics.com e faça upload manualmente.');
+    
+    setLoading(false);
   };
 
   const clear = () => {
     setImageFile(null);
     setImagePreview(null);
-    setMetadata(null);
-  };
-
-  const downloadReport = () => {
-    if (!metadata) return;
-    
-    let report = 'EXIF HUNTER - RELATÓRIO DE METADADOS\n';
-    report += '='.repeat(50) + '\n\n';
-    
-    Object.entries(metadata).forEach(([key, value]) => {
-      report += `${key}: ${value}\n`;
-    });
-    
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `exif_report_${Date.now()}.txt`;
-    a.click();
+    setImageUrl('');
+    setFotoForensicsUrl('');
   };
 
   return (
