@@ -1,0 +1,257 @@
+.boitata-page {
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.boitata-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.boitata-header h1 {
+  font-size: 2.5rem;
+  color: var(--primary);
+  letter-spacing: 3px;
+  margin-bottom: 10px;
+}
+
+.boitata-header p {
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+.tools-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+.tool-nav-btn {
+  padding: 20px;
+  background: var(--bg-card);
+  border: 2px solid;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.tool-nav-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+.tool-nav-btn.active {
+  background: rgba(0, 255, 65, 0.1);
+  transform: translateY(-5px);
+}
+
+.tool-nav-btn svg {
+  color: inherit;
+}
+
+.tool-nav-btn span {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.tool-display {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  min-height: 500px;
+}
+
+.tool-header {
+  padding: 30px;
+  border-bottom: 2px solid;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.tool-header svg {
+  color: var(--primary);
+}
+
+.tool-header h2 {
+  color: var(--text-bright);
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+}
+
+.tool-header p {
+  color: var(--text-dim);
+}
+
+.tool-body {
+  padding: 40px;
+}
+
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.link-card {
+  padding: 20px;
+  background: var(--bg-darker);
+  border: 2px solid;
+  color: var(--text);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.link-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.link-card svg {
+  color: var(--primary);
+}
+
+.link-card span {
+  flex: 1;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.link-arrow {
+  color: var(--primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.tool-content h3 {
+  color: var(--primary);
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  letter-spacing: 2px;
+}
+
+.tool-content p {
+  color: var(--text-dim);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.test-section {
+  background: var(--bg-darker);
+  border: 1px solid var(--border);
+  padding: 25px;
+  margin: 30px 0;
+}
+
+.test-section h4 {
+  color: var(--text-bright);
+  margin-bottom: 15px;
+}
+
+.test-section ol {
+  color: var(--text-dim);
+  line-height: 2;
+  margin-left: 25px;
+  margin-bottom: 20px;
+}
+
+.clickjacking-tester {
+  display: flex;
+  gap: 15px;
+}
+
+.url-input {
+  flex: 1;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  color: var(--text);
+  font-family: inherit;
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.test-btn {
+  padding: 12px 30px;
+  background: var(--primary);
+  border: none;
+  color: #000;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.test-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.info-box {
+  background: rgba(0, 255, 65, 0.05);
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  padding: 20px;
+  margin-top: 30px;
+}
+
+.info-box h4 {
+  color: var(--primary);
+  margin-bottom: 15px;
+}
+
+.info-box code {
+  display: block;
+  background: #000;
+  color: var(--primary);
+  padding: 10px;
+  margin: 10px 0;
+  border-left: 3px solid var(--primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.boitata-footer {
+  text-align: center;
+  margin-top: 60px;
+  padding: 30px;
+  background: rgba(255, 204, 0, 0.05);
+  border: 2px solid #ffcc00;
+}
+
+.boitata-footer p {
+  color: #ffcc00;
+  margin: 10px 0;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+  .boitata-page {
+    padding: 20px;
+  }
+  
+  .tools-nav {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .links-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .clickjacking-tester {
+    flex-direction: column;
+  }
+}
