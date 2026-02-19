@@ -71,61 +71,76 @@ const ExifHunter = () => {
         <p>Extrator de Metadados de Imagens - Descubra informações ocultas</p>
       </header>
 
-      <div className="upload-section">
-        <div className="upload-card">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            id="file-input"
-            hidden
-          />
-          <label htmlFor="file-input" className="upload-area">
-            {imagePreview ? (
-              <div className="image-preview">
-                <img src={imagePreview} alt="Preview" />
-              </div>
-            ) : (
-              <div className="upload-placeholder">
-                <Upload size={48} />
-                <p>Clique ou arraste uma imagem aqui</p>
-                <span>Suporta: JPG, PNG, WEBP, GIF</span>
-              </div>
-            )}
-          </label>
-          
-          {imageFile && (
-            <div className="file-actions">
-              <button className="btn-analyze" onClick={extractMetadata} disabled={loading}>
+      <div className="analysis-methods">
+        <div className="method-card">
+          <h3>📤 MÉTODO 1: Analisar por URL</h3>
+          <p>Insira a URL de uma imagem pública para análise completa com FotoForensics</p>
+          <div className="url-input-group">
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://exemplo.com/imagem.jpg"
+              className="url-input"
+            />
+            <button 
+              className="btn-analyze" 
+              onClick={analyzeWithFotoForensics}
+              disabled={loading || !imageUrl.trim()}
+            >
+              <FileSearch size={20} />
+              {loading ? 'ANALISANDO...' : 'ANALISAR COM FOTOFORENSICS'}
+            </button>
+          </div>
+          {fotoForensicsUrl && (
+            <a 
+              href={fotoForensicsUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="forensics-link"
+            >
+              <ExternalLink size={16} />
+              Ver análise completa no FotoForensics
+            </a>
+          )}
+        </div>
+
+        <div className="method-divider">OU</div>
+
+        <div className="method-card">
+          <h3>📁 MÉTODO 2: Upload de Arquivo</h3>
+          <p>Faça upload de uma imagem do seu dispositivo</p>
+          <div className="upload-section-inline">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              id="file-input"
+              hidden
+            />
+            <label htmlFor="file-input" className="upload-btn">
+              <Upload size={20} />
+              {imageFile ? imageFile.name : 'SELECIONAR IMAGEM'}
+            </label>
+            {imageFile && (
+              <button className="btn-analyze-upload" onClick={analyzeUploadedImage}>
                 <FileSearch size={20} />
-                {loading ? 'ANALISANDO...' : 'EXTRAIR METADADOS'}
+                ANALISAR
               </button>
-              <button className="btn-clear" onClick={clear}>
-                <Trash2 size={20} /> LIMPAR
-              </button>
+            )}
+          </div>
+          {imagePreview && (
+            <div className="preview-inline">
+              <img src={imagePreview} alt="Preview" />
             </div>
           )}
         </div>
       </div>
 
-      {metadata && (
-        <div className="metadata-section">
-          <div className="metadata-header">
-            <h2>📦 METADADOS EXTRAÍDOS</h2>
-            <button className="btn-download" onClick={downloadReport}>
-              <Download size={18} /> EXPORTAR
-            </button>
-          </div>
-          
-          <div className="metadata-grid">
-            {Object.entries(metadata).map(([key, value]) => (
-              <div key={key} className="metadata-item">
-                <div className="metadata-key">{key}</div>
-                <div className="metadata-value">{value}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {(imageFile || imageUrl) && (
+        <button className="btn-clear-all" onClick={clear}>
+          <Trash2 size={20} /> LIMPAR TUDO
+        </button>
       )}
 
       <div className="info-section">
