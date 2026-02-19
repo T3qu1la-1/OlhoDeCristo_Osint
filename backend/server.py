@@ -10,10 +10,7 @@ from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone
 from scanner import VulnerabilityScanner
-from advanced_scanner import AdvancedVulnerabilityScanner
-
-# Alias para usar o scanner avançado
-CompleteVulnerabilityScanner = AdvancedVulnerabilityScanner
+from complete_scanner import CompleteVulnerabilityScanner
 import asyncio
 
 
