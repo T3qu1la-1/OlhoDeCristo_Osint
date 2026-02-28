@@ -22,42 +22,102 @@ Criar uma aplicação web unificando:
 
 ## Funcionalidades Implementadas
 
-### Scanner de Vulnerabilidades (35 testes)
-1. SQL Injection
-2. XSS (Cross-Site Scripting)
-3. XXE (XML External Entity)
-4. Command Injection
-5. Path Traversal / LFI
-6. SSRF (Server-Side Request Forgery)
-7. Open Redirect
-8. Log Injection
-9. SSTI (Server-Side Template Injection)
-10. LDAP Injection
-11. NoSQL Injection
-12. JWT Manipulation
-13. Insecure WebSocket
-14. Insecure Deserialization
-15. HTTP Request Smuggling
-16. CRLF Injection
-17. Host Header Injection
-18. Security Headers Check
-19. SSL/TLS Verification
-20. CORS Misconfiguration
-21. Directory Listing
-22. Rate Limiting Check
-23. HTTP Parameter Pollution
-24. Information Disclosure
-25. Sensitive Directories
-26. Clickjacking
-27. Backup Files Exposure
-28. XML Injection
-29. File Upload Detection
-30. IDOR
-31. Brute Force Protection
-32. Weak Password Policy
-33. Session Fixation
-34. CSRF Protection
-35. Error Handling/Leakage
+### Scanner de Vulnerabilidades (73 testes)
+
+**SQL Injection (4 testes):**
+1. SQL Error-Based
+2. SQL Union-Based
+3. SQL Blind Boolean
+4. SQL Time-Based
+
+**XSS - Cross-Site Scripting (3 testes):**
+5. XSS Reflected
+6. XSS DOM-Based
+7. XSS Filter Bypass
+
+**Outras Injeções (7 testes):**
+8. Command Injection
+9. XXE (XML External Entity)
+10. SSTI (Server-Side Template Injection)
+11. LDAP Injection
+12. XPath Injection
+13. NoSQL Injection
+14. GraphQL Injection
+
+**File/Path Vulnerabilities (4 testes):**
+15. LFI (Local File Inclusion)
+16. RFI (Remote File Inclusion)
+17. Path Traversal
+18. File Upload Detection
+
+**SSRF (1 teste):**
+19. SSRF (Server-Side Request Forgery)
+
+**Autenticação & Autorização (5 testes):**
+20. Auth Bypass
+21. Default Credentials
+22. JWT Vulnerabilities
+23. Session Fixation
+24. Brute Force Protection
+
+**Headers & Configurações (6 testes):**
+25. Security Headers Check
+26. CORS Misconfiguration
+27. SSL/TLS Verification
+28. Cookie Security
+29. HTTP Methods
+30. Server Info Disclosure
+
+**Arquivos Sensíveis (3 testes):**
+31. Sensitive Files
+32. Backup Files Exposure
+33. Directory Listing
+
+**Redirects & CSRF (3 testes):**
+34. Open Redirect
+35. CSRF Protection
+36. CRLF Injection
+
+**Miscelânea (6 testes):**
+37. Clickjacking
+38. Host Header Injection
+39. Cache Poisoning
+40. Error Handling/Leakage
+41. IDOR
+42. Rate Limiting Check
+
+**Testes Avançados (31 testes):**
+43. HTTP Request Smuggling
+44. HTTP Parameter Pollution
+45. WebSocket Security
+46. XML Injection
+47. CSV Injection
+48. Prototype Pollution
+49. Mass Assignment
+50. Subdomain Takeover
+51. Email Header Injection
+52. Git Repository Exposure
+53. Environment File Exposure (.env)
+54. Docker/Kubernetes Config Exposure
+55. Cloud Metadata SSRF (AWS/GCP/Azure)
+56. HTTP Response Splitting
+57. Race Condition
+58. Insecure Deserialization
+59. Path Confusion
+60. Unicode Normalization Bypass
+61. Timing Attack
+62. Memory Disclosure
+63. Null Byte Injection
+64. API Key Exposure in Source
+65. GraphQL Introspection
+66. CORS Wildcard with Credentials
+67. OAuth Redirect URI Validation
+68. DNS Rebinding Protection
+69. JWT Algorithm Confusion
+70. Weak SSL/TLS Ciphers
+71. Business Logic Flaws
+72. Format String Vulnerabilities
+73. Buffer Overflow Detection
 
 ### Páginas Implementadas
 - **Home/Dashboard**: Visão geral da plataforma
