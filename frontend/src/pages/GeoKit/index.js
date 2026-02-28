@@ -1,9 +1,8 @@
 /**
- * GeoKit - Advanced Geolocation Toolkit
- * Based on EarthKit by JettChenT (https://github.com/JettChenT/earthkit)
- * Licensed under GPL v3
- * Adapted for Olhos De Deus - Full-featured implementation
+ * GeoClip - Image Geolocation Tool
+ * Based on EarthKit by JettChenT (GPL v3)
+ * OSINT tool for photo location analysis
  */
 
-import GeoKit from './GeoKit';
-export default GeoKit;
+import GeoClip from './GeoClip';
+export default GeoClip;
