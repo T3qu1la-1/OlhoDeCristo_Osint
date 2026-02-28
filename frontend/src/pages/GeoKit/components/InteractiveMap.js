@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import DeckGL from '@deck.gl/react';
-import { Map } from 'react-map-gl';
-import { HeatmapLayer, ScatterplotLayer, ArcLayer, IconLayer } from '@deck.gl/layers';
+import Map from 'react-map-gl/maplibre';
+import { HeatmapLayer } from '@deck.gl/aggregation-layers';
+import { ScatterplotLayer, ArcLayer } from '@deck.gl/layers';
 import { FlyToInterpolator } from '@deck.gl/core';
-import { EditableGeoJsonLayer, ViewMode, DrawPolygonMode } from '@deck.gl-community/editable-layers';
-import { Target, Plus, Trash2, Download, Upload, Crosshair } from 'lucide-react';
+import { Target, Plus, Trash2, Download, Crosshair } from 'lucide-react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 const INITIAL_VIEW_STATE = {
