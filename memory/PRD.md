@@ -157,4 +157,4 @@ Criar uma aplicação web unificando:
 - P2: React Router para URLs diretas
 
 ## Data da Última Atualização
-19/02/2026
+28/02/2026 - Expandido scanner para 73 testes de vulnerabilidades
