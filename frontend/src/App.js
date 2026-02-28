@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import './App.css';
-import Sidebar from './components/Sidebar';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
 import PentesterPage from './pages/PentesterPage';
 import Reports from './pages/Reports';
@@ -11,12 +13,38 @@ import Academy from './pages/Academy';
 import EmojiCrypt from './pages/EmojiCrypt';
 import ExifHunter from './pages/ExifHunter';
 import GeoKit from './pages/GeoKit/index';
+import Sidebar from './components/Sidebar';
+import './styles/global.css';
+import './App.css';
 
-function App() {
-  const [currentPage, setCurrentPage] = useState('home');
+const AppContent = () => {
+  const { user, loading } = useAuth();
+  const [currentPage, setCurrentPage] = useState(user ? 'dashboard' : 'landing');
 
-  const renderPage = () => {
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loader"></div>
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+
+  // Público - sem autenticação
+  if (!user) {
+    if (currentPage === 'login') {
+      return <LoginPage onNavigate={setCurrentPage} />;
+    }
+    if (currentPage === 'register') {
+      return <RegisterPage onNavigate={setCurrentPage} />;
+    }
+    return <LandingPage onNavigate={setCurrentPage} />;
+  }
+
+  // Privado - com autenticação (Dashboard)
+  const renderDashboardPage = () => {
     switch (currentPage) {
+      case 'dashboard':
       case 'home':
         return <Dashboard onNavigate={setCurrentPage} />;
       case 'pentester':
@@ -43,12 +71,20 @@ function App() {
   };
 
   return (
-    <div className="App">
+    <div className="dashboard-layout">
       <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
-      <div className="main-content">
-        {renderPage()}
+      <div className="dashboard-content">
+        {renderDashboardPage()}
       </div>
     </div>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
