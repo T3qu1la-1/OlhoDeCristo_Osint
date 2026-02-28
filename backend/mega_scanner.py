@@ -1597,6 +1597,9 @@ class MegaVulnerabilityScanner:
             ("DNS Rebinding", self.test_dns_rebinding),
             ("JWT Algorithm Confusion", self.test_jwt_algorithm_confusion),
             ("Weak SSL/TLS Ciphers", self.test_weak_cipher),
+            ("Business Logic Bypass", self.test_business_logic_bypass),
+            ("Server-Side Includes Injection", self.test_server_side_includes),
+            ("XXE Advanced - XML Bomb", self.test_xml_external_entity_advanced),
         ]
         
         async with self:
