@@ -953,7 +953,7 @@ class MegaVulnerabilityScanner:
                         payload, "Resposta anormal detectada",
                         "Configure corretamente Transfer-Encoding e Content-Length", "CWE-444"))
                     break
-            except:
+            except Exception:
                 pass
         return results
 
