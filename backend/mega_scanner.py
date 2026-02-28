@@ -934,6 +934,518 @@ class MegaVulnerabilityScanner:
             "Implemente rate limiting", "CWE-770"))
         return results
 
+    # ==================== NOVOS TESTES (43-73) ====================
+
+    async def test_http_request_smuggling(self, target: str, scan_id: str) -> List[Dict]:
+        """HTTP Request Smuggling"""
+        results = []
+        smuggling_payloads = [
+            "Transfer-Encoding: chunked\r\nContent-Length: 5",
+            "Content-Length: 5\r\nTransfer-Encoding: chunked",
+        ]
+        for payload in smuggling_payloads:
+            try:
+                headers = {"X-Smuggle-Test": payload}
+                r = await self.make_request(target, headers=headers)
+                if "chunked" in r.get("body", "").lower():
+                    results.append(self.vuln(scan_id, "critical", "HTTP Request Smuggling",
+                        "Possível vulnerabilidade de HTTP Request Smuggling", "Protocol", target,
+                        payload, "Resposta anormal detectada",
+                        "Configure corretamente Transfer-Encoding e Content-Length", "CWE-444"))
+                    break
+            except:
+                pass
+        return results
+
+    async def test_http_parameter_pollution(self, target: str, scan_id: str) -> List[Dict]:
+        """HTTP Parameter Pollution"""
+        results = []
+        params = ['id', 'page', 'user']
+        for param in params:
+            url = f"{target}{'&' if '?' in target else '?'}{param}=1&{param}=2"
+            r = await self.make_request(url)
+            if r["status_code"] == 200 and len(r["body"]) > 100:
+                results.append(self.vuln(scan_id, "medium", "HTTP Parameter Pollution",
+                    f"Parâmetro '{param}' aceita valores duplicados", "Configuration", url,
+                    f"{param}=1&{param}=2", "Servidor processou parâmetros duplicados",
+                    "Valide e sanitize parâmetros duplicados", "CWE-235"))
+                break
+        return results
+
+    async def test_websocket_security(self, target: str, scan_id: str) -> List[Dict]:
+        """WebSocket Security"""
+        results = []
+        ws_url = target.replace("https://", "wss://").replace("http://", "ws://")
+        try:
+            headers = {"Origin": "http://evil.com"}
+            r = await self.make_request(target, headers=headers)
+            if r["status_code"] in [101, 200]:
+                results.append(self.vuln(scan_id, "high", "WebSocket CORS Inseguro",
+                    "WebSocket aceita origens não confiáveis", "Configuration", ws_url,
+                    "Origin: http://evil.com", "Conexão aceita",
+                    "Valide Origin em conexões WebSocket", "CWE-942"))
+        except:
+            pass
+        return results
+
+    async def test_xml_injection(self, target: str, scan_id: str) -> List[Dict]:
+        """XML Injection"""
+        results = []
+        payloads = [
+            "<test>value</test>", "<?xml version='1.0'?><test>value</test>",
+            "<test><![CDATA[value]]></test>"
+        ]
+        headers = {"Content-Type": "application/xml"}
+        for p in payloads:
+            r = await self.make_request(target, method="POST", headers=headers, data=p)
+            if "xml" in r.get("body", "").lower() and r["status_code"] != 415:
+                results.append(self.vuln(scan_id, "high", "XML Injection",
+                    "Aplicação processa XML sem validação adequada", "Injection", target,
+                    p, "XML processado", "Valide e sanitize entrada XML", "CWE-91"))
+                break
+        return results
+
+    async def test_csv_injection(self, target: str, scan_id: str) -> List[Dict]:
+        """CSV Injection"""
+        results = []
+        payloads = ["=1+1", "@SUM(1+1)", "+1+1", "-1+1"]
+        for p in payloads:
+            url = f"{target}{'&' if '?' in target else '?'}export=csv&data={urllib.parse.quote(p)}"
+            r = await self.make_request(url)
+            if r["status_code"] == 200 and "csv" in r.get("headers", {}).get("content-type", "").lower():
+                results.append(self.vuln(scan_id, "medium", "CSV Injection",
+                    "Exportação CSV aceita fórmulas perigosas", "Injection", url,
+                    p, "CSV gerado com fórmula", "Escape caracteres especiais em CSV", "CWE-1236"))
+                break
+        return results
+
+    async def test_prototype_pollution(self, target: str, scan_id: str) -> List[Dict]:
+        """Prototype Pollution"""
+        results = []
+        payloads = [
+            "__proto__[test]=polluted",
+            "constructor.prototype.test=polluted",
+            "constructor[prototype][test]=polluted"
+        ]
+        for p in payloads:
+            url = f"{target}{'&' if '?' in target else '?'}{p}"
+            r = await self.make_request(url)
+            if "polluted" in r.get("body", "").lower():
+                results.append(self.vuln(scan_id, "critical", "Prototype Pollution",
+                    "Aplicação vulnerável a prototype pollution", "Injection", url,
+                    p, "Protótipo poluído", "Valide propriedades de objetos", "CWE-1321"))
+                break
+        return results
+
+    async def test_mass_assignment(self, target: str, scan_id: str) -> List[Dict]:
+        """Mass Assignment"""
+        results = []
+        endpoints = ['/api/user', '/api/profile', '/api/account']
+        payload = '{"role":"admin","isAdmin":true,"permissions":"all"}'
+        headers = {"Content-Type": "application/json"}
+        
+        for ep in endpoints:
+            url = target.rstrip('/') + ep
+            r = await self.make_request(url, method="POST", headers=headers, data=payload)
+            if r["status_code"] in [200, 201] and ("admin" in r.get("body", "").lower() or "success" in r.get("body", "").lower()):
+                results.append(self.vuln(scan_id, "high", "Mass Assignment",
+                    f"Endpoint {ep} aceita atribuição em massa", "Authorization", url,
+                    payload, "Atributos sensíveis aceitos",
+                    "Use whitelist de campos permitidos", "CWE-915"))
+                break
+        return results
+
+    async def test_subdomain_takeover(self, target: str, scan_id: str) -> List[Dict]:
+        """Subdomain Takeover"""
+        results = []
+        r = await self.make_request(target)
+        body = r.get("body", "").lower()
+        
+        takeover_signatures = [
+            ("There isn't a GitHub Pages site here", "GitHub Pages"),
+            ("No such app", "Heroku"),
+            ("NoSuchBucket", "AWS S3"),
+            ("Repository not found", "Bitbucket"),
+            ("Project not found", "GitLab"),
+        ]
+        
+        for sig, provider in takeover_signatures:
+            if sig.lower() in body:
+                results.append(self.vuln(scan_id, "high", "Subdomain Takeover",
+                    f"Subdomínio vulnerável a takeover via {provider}", "Configuration", target,
+                    f"{provider} signature", sig, "Remova DNS órfãos ou configure corretamente", "CWE-346"))
+                break
+        return results
+
+    async def test_email_injection(self, target: str, scan_id: str) -> List[Dict]:
+        """Email Header Injection"""
+        results = []
+        payloads = [
+            "victim@test.com%0ACc:attacker@evil.com",
+            "victim@test.com%0D%0ABcc:attacker@evil.com",
+            "victim@test.com\nCc:attacker@evil.com",
+        ]
+        
+        for p in payloads:
+            url = f"{target}{'&' if '?' in target else '?'}email={p}"
+            r = await self.make_request(url)
+            if r["status_code"] == 200 and ("mail" in r.get("body", "").lower() or "sent" in r.get("body", "").lower()):
+                results.append(self.vuln(scan_id, "high", "Email Header Injection",
+                    "Possível injeção de headers de email", "Injection", url,
+                    p, "Email processado com headers injetados",
+                    "Valide e sanitize inputs de email", "CWE-93"))
+                break
+        return results
+
+    async def test_git_exposure(self, target: str, scan_id: str) -> List[Dict]:
+        """Exposed .git Directory"""
+        results = []
+        git_paths = ['/.git/config', '/.git/HEAD', '/.git/index', '/.git/logs/HEAD']
+        
+        for path in git_paths:
+            url = target.rstrip('/') + path
+            r = await self.make_request(url)
+            if r["status_code"] == 200 and (
+                "repositoryformatversion" in r["body"].lower() or
+                "ref:" in r["body"].lower() or
+                len(r["body"]) > 10
+            ):
+                results.append(self.vuln(scan_id, "critical", "Diretório .git Exposto",
+                    f"Repositório Git acessível publicamente em {path}", "Information Disclosure", url,
+                    path, r["body"][:200], "Bloqueie acesso a arquivos .git", "CWE-538"))
+                break
+        return results
+
+    async def test_env_exposure(self, target: str, scan_id: str) -> List[Dict]:
+        """Exposed .env Files"""
+        results = []
+        env_paths = ['/.env', '/.env.local', '/.env.production', '/.env.backup', '/api/.env']
+        
+        for path in env_paths:
+            url = target.rstrip('/') + path
+            r = await self.make_request(url)
+            if r["status_code"] == 200 and any(key in r["body"] for key in ["API_KEY", "SECRET", "PASSWORD", "DB_", "AWS_"]):
+                results.append(self.vuln(scan_id, "critical", "Arquivo .env Exposto",
+                    f"Arquivo de configuração sensível exposto: {path}", "Information Disclosure", url,
+                    path, r["body"][:200], "Bloqueie acesso a arquivos .env", "CWE-540"))
+                break
+        return results
+
+    async def test_docker_exposure(self, target: str, scan_id: str) -> List[Dict]:
+        """Docker/Kubernetes Config Exposure"""
+        results = []
+        docker_paths = ['/Dockerfile', '/.dockerignore', '/docker-compose.yml', '/.kube/config']
+        
+        for path in docker_paths:
+            url = target.rstrip('/') + path
+            r = await self.make_request(url)
+            if r["status_code"] == 200 and any(key in r["body"] for key in ["FROM ", "COPY", "RUN", "apiVersion", "kubectl"]):
+                results.append(self.vuln(scan_id, "high", "Configuração Docker/K8s Exposta",
+                    f"Arquivo de configuração exposto: {path}", "Information Disclosure", url,
+                    path, r["body"][:200], "Bloqueie acesso a arquivos de config", "CWE-552"))
+                break
+        return results
+
+    async def test_cloud_metadata(self, target: str, scan_id: str) -> List[Dict]:
+        """Cloud Metadata SSRF"""
+        results = []
+        metadata_urls = [
+            "http://169.254.169.254/latest/meta-data/",
+            "http://metadata.google.internal/computeMetadata/v1/",
+            "http://169.254.169.254/metadata/v1/",
+        ]
+        params = ['url', 'redirect', 'link', 'src', 'source', 'target']
+        
+        for param in params:
+            for metadata_url in metadata_urls:
+                url = f"{target}{'&' if '?' in target else '?'}{param}={urllib.parse.quote(metadata_url)}"
+                r = await self.make_request(url)
+                if any(key in r.get("body", "").lower() for key in ["ami-id", "instance-id", "credentials", "access_token"]):
+                    results.append(self.vuln(scan_id, "critical", "Cloud Metadata SSRF",
+                        f"SSRF permite acesso a metadata da cloud", "SSRF", url,
+                        metadata_url, "Metadata acessível", "Bloqueie acesso a IPs de metadata", "CWE-918"))
+                    return results
+        return results
+
+    async def test_response_splitting(self, target: str, scan_id: str) -> List[Dict]:
+        """HTTP Response Splitting"""
+        results = []
+        payloads = [
+            "%0d%0aContent-Length:%200%0d%0a%0d%0aHTTP/1.1%20200%20OK",
+            "%0aSet-Cookie:%20admin=true",
+            "\r\nSet-Cookie: admin=true",
+        ]
+        params = ['redirect', 'url', 'return', 'next']
+        
+        for param in params:
+            for p in payloads:
+                url = f"{target}{'&' if '?' in target else '?'}{param}={p}"
+                r = await self.make_request(url)
+                if "Set-Cookie" in r.get("headers", {}) or "set-cookie" in r.get("body", "").lower():
+                    results.append(self.vuln(scan_id, "high", "HTTP Response Splitting",
+                        f"Parâmetro '{param}' vulnerável a response splitting", "Injection", url,
+                        p, "Header injetado", "Sanitize CRLF em headers", "CWE-113"))
+                    return results
+        return results
+
+    async def test_race_condition(self, target: str, scan_id: str) -> List[Dict]:
+        """Race Condition"""
+        results = []
+        endpoints = ['/api/coupon', '/api/discount', '/api/redeem', '/api/transfer']
+        
+        for ep in endpoints:
+            url = target.rstrip('/') + ep
+            tasks = [self.make_request(url, method="POST") for _ in range(5)]
+            responses = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            success_count = sum(1 for r in responses if isinstance(r, dict) and r.get("status_code") in [200, 201])
+            if success_count > 1:
+                results.append(self.vuln(scan_id, "high", "Race Condition",
+                    f"Endpoint {ep} vulnerável a race condition", "Business Logic", url,
+                    "5 requisições simultâneas", f"{success_count} requisições bem-sucedidas",
+                    "Implemente locks e transações atômicas", "CWE-362"))
+                break
+        return results
+
+    async def test_insecure_deserialization(self, target: str, scan_id: str) -> List[Dict]:
+        """Insecure Deserialization"""
+        results = []
+        # Python pickle payload
+        payloads = [
+            base64.b64encode(b"cos\nsystem\n(S'id'\ntR.").decode(),
+            "rO0ABXNyABdqYXZhLnV0aWwuUHJpb3JpdHlRdWV1ZQ==",  # Java serialized
+            '{"__type":"System.Windows.Data.ObjectDataProvider"}',  # .NET
+        ]
+        
+        for p in payloads:
+            url = f"{target}{'&' if '?' in target else '?'}data={p}"
+            r = await self.make_request(url)
+            if r["status_code"] == 500 or any(err in r.get("body", "").lower() for err in ["pickle", "serializ", "unmarshal", "__reduce__"]):
+                results.append(self.vuln(scan_id, "critical", "Desserialização Insegura",
+                    "Aplicação desserializa dados não confiáveis", "Injection", url,
+                    p[:50], "Erro de desserialização", "Nunca desserialize dados não confiáveis", "CWE-502"))
+                break
+        return results
+
+    async def test_path_confusion(self, target: str, scan_id: str) -> List[Dict]:
+        """Path Confusion"""
+        results = []
+        payloads = [
+            "/admin/./config", "/api/../admin", "/user/..%2f..%2fadmin",
+            "///admin", "/admin//config"
+        ]
+        
+        for p in payloads:
+            url = target.rstrip('/') + p
+            r = await self.make_request(url)
+            if r["status_code"] == 200:
+                results.append(self.vuln(scan_id, "high", "Path Confusion",
+                    f"Path confusion permite bypass de controle de acesso", "Authorization", url,
+                    p, f"Status: {r['status_code']}", "Normalize paths antes de validação", "CWE-41"))
+                break
+        return results
+
+    async def test_unicode_bypass(self, target: str, scan_id: str) -> List[Dict]:
+        """Unicode Normalization Bypass"""
+        results = []
+        # Unicode chars que normalizam para admin
+        payloads = [
+            "admin\u0041", "ａｄｍｉｎ",  # Fullwidth
+            "adm\u0131n", "adm\u0069n",  # Dotless i
+        ]
+        
+        for p in payloads:
+            url = f"{target}{'&' if '?' in target else '?'}user={urllib.parse.quote(p)}"
+            r = await self.make_request(url)
+            if "admin" in r.get("body", "").lower():
+                results.append(self.vuln(scan_id, "medium", "Unicode Bypass",
+                    "Validação pode ser bypassada com caracteres Unicode", "Authorization", url,
+                    p, "Validação bypassada", "Normalize Unicode antes de validar", "CWE-179"))
+                break
+        return results
+
+    async def test_timing_attack(self, target: str, scan_id: str) -> List[Dict]:
+        """Timing Attack"""
+        results = []
+        import time
+        endpoints = ['/api/login', '/api/auth', '/login']
+        
+        for ep in endpoints:
+            url = target.rstrip('/') + ep
+            times = []
+            for i in range(3):
+                start = time.time()
+                await self.make_request(url, method="POST", data={"user": "admin", "pass": "test"})
+                times.append(time.time() - start)
+            
+            if max(times) - min(times) > 0.5:
+                results.append(self.vuln(scan_id, "medium", "Timing Attack",
+                    f"Endpoint {ep} vulnerável a timing attack", "Cryptography", url,
+                    "Análise de tempo", f"Variação: {max(times)-min(times):.2f}s",
+                    "Use comparação constant-time", "CWE-208"))
+                break
+        return results
+
+    async def test_memory_disclosure(self, target: str, scan_id: str) -> List[Dict]:
+        """Memory Disclosure"""
+        results = []
+        payloads = ["A" * 10000, "\x00" * 1000, "%s" * 100]
+        
+        for p in payloads:
+            url = f"{target}{'&' if '?' in target else '?'}data={urllib.parse.quote(p)}"
+            r = await self.make_request(url)
+            if r["status_code"] == 500 or "memory" in r.get("body", "").lower():
+                results.append(self.vuln(scan_id, "high", "Memory Disclosure",
+                    "Aplicação pode expor conteúdo da memória", "Information Disclosure", url,
+                    f"Payload de {len(p)} bytes", "Erro de memória",
+                    "Valide tamanho de entrada e trate erros", "CWE-497"))
+                break
+        return results
+
+    async def test_null_byte_injection(self, target: str, scan_id: str) -> List[Dict]:
+        """Null Byte Injection"""
+        results = []
+        payloads = ["%00", "\x00", "test.php%00.jpg", "../../etc/passwd%00"]
+        params = ['file', 'path', 'page', 'doc']
+        
+        for param in params:
+            for p in payloads:
+                url = f"{target}{'&' if '?' in target else '?'}{param}={p}"
+                r = await self.make_request(url)
+                if r["status_code"] == 200 and len(r.get("body", "")) > 50:
+                    results.append(self.vuln(scan_id, "high", "Null Byte Injection",
+                        f"Parâmetro '{param}' vulnerável a null byte", "Injection", url,
+                        p, "Processamento anormal", "Valide caracteres nulos", "CWE-158"))
+                    return results
+        return results
+
+    async def test_api_key_exposure(self, target: str, scan_id: str) -> List[Dict]:
+        """API Key Exposure in Source"""
+        results = []
+        r = await self.make_request(target)
+        body = r.get("body", "")
+        
+        # Regex patterns for API keys
+        patterns = [
+            (r'api[_-]?key["\s:=]+([A-Za-z0-9_-]{20,})', "API Key"),
+            (r'access[_-]?token["\s:=]+([A-Za-z0-9_-]{20,})', "Access Token"),
+            (r'AKIA[0-9A-Z]{16}', "AWS Access Key"),
+            (r'sk_live_[0-9a-zA-Z]{24,}', "Stripe Secret Key"),
+            (r'ghp_[0-9a-zA-Z]{36}', "GitHub Token"),
+        ]
+        
+        for pattern, key_type in patterns:
+            matches = re.findall(pattern, body, re.IGNORECASE)
+            if matches:
+                results.append(self.vuln(scan_id, "critical", "API Key Exposta",
+                    f"{key_type} encontrada no código fonte", "Information Disclosure", target,
+                    "Source code", f"{key_type} detectada",
+                    "Remova chaves do código e use variáveis de ambiente", "CWE-798"))
+                break
+        return results
+
+    async def test_graphql_introspection(self, target: str, scan_id: str) -> List[Dict]:
+        """GraphQL Introspection Enabled"""
+        results = []
+        graphql_paths = ['/graphql', '/api/graphql', '/v1/graphql', '/query']
+        introspection_query = '{"query":"{ __schema { types { name } } }"}'
+        headers = {"Content-Type": "application/json"}
+        
+        for path in graphql_paths:
+            url = target.rstrip('/') + path
+            r = await self.make_request(url, method="POST", headers=headers, data=introspection_query)
+            if "__schema" in r.get("body", "") or "types" in r.get("body", ""):
+                results.append(self.vuln(scan_id, "medium", "GraphQL Introspection Ativa",
+                    f"Introspection expõe schema GraphQL em {path}", "Information Disclosure", url,
+                    introspection_query, "Schema exposto",
+                    "Desabilite introspection em produção", "CWE-200"))
+                break
+        return results
+
+    async def test_cors_wildcard(self, target: str, scan_id: str) -> List[Dict]:
+        """CORS Wildcard with Credentials"""
+        results = []
+        r = await self.make_request(target, headers={"Origin": "https://evil.com"})
+        acao = r.get("headers", {}).get("access-control-allow-origin", "")
+        acac = r.get("headers", {}).get("access-control-allow-credentials", "")
+        
+        if acao == "*" and acac.lower() == "true":
+            results.append(self.vuln(scan_id, "high", "CORS Wildcard com Credentials",
+                "CORS configurado com * e credentials true", "Configuration", target,
+                "Origin: https://evil.com", f"ACAO: {acao}, ACAC: {acac}",
+                "Não use * com credentials true", "CWE-942"))
+        return results
+
+    async def test_oauth_redirect_uri(self, target: str, scan_id: str) -> List[Dict]:
+        """OAuth Redirect URI Validation"""
+        results = []
+        oauth_params = ['redirect_uri', 'return_to', 'callback']
+        evil_urls = [
+            "https://evil.com",
+            "https://evil.com.example.com",
+            "https://example.com.evil.com",
+        ]
+        
+        for param in oauth_params:
+            for evil_url in evil_urls:
+                url = f"{target}{'&' if '?' in target else '?'}{param}={urllib.parse.quote(evil_url)}"
+                r = await self.make_request(url, allow_redirects=False)
+                location = r.get("headers", {}).get("location", "")
+                if r["status_code"] in [301, 302, 303, 307, 308] and "evil.com" in location:
+                    results.append(self.vuln(scan_id, "critical", "OAuth Redirect URI Bypass",
+                        f"Validação de redirect_uri insuficiente", "Authorization", url,
+                        evil_url, f"Redirect para {location}",
+                        "Valide redirect_uri contra whitelist", "CWE-601"))
+                    return results
+        return results
+
+    async def test_dns_rebinding(self, target: str, scan_id: str) -> List[Dict]:
+        """DNS Rebinding Protection"""
+        results = []
+        # Test with numeric IP
+        numeric_hosts = ["http://127.0.0.1", "http://169.254.169.254", "http://[::1]"]
+        params = ['url', 'host', 'target']
+        
+        for param in params:
+            for host in numeric_hosts:
+                url = f"{target}{'&' if '?' in target else '?'}{param}={urllib.parse.quote(host)}"
+                r = await self.make_request(url)
+                if r["status_code"] == 200 and len(r.get("body", "")) > 50:
+                    results.append(self.vuln(scan_id, "high", "DNS Rebinding Possível",
+                        "Aplicação não valida hosts/IPs internos", "SSRF", url,
+                        host, "Requisição para IP interno aceita",
+                        "Bloqueie IPs privados e localhost", "CWE-350"))
+                    return results
+        return results
+
+    async def test_jwt_algorithm_confusion(self, target: str, scan_id: str) -> List[Dict]:
+        """JWT Algorithm Confusion"""
+        results = []
+        # Create a JWT with alg: none
+        jwt_none = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhZG1pbiJ9."
+        headers = {"Authorization": f"Bearer {jwt_none}"}
+        r = await self.make_request(target, headers=headers)
+        
+        if r["status_code"] in [200, 201] and "admin" in r.get("body", "").lower():
+            results.append(self.vuln(scan_id, "critical", "JWT Algorithm Confusion",
+                "JWT aceita algoritmo 'none'", "Cryptography", target,
+                jwt_none, "Token aceito sem assinatura",
+                "Force algoritmos específicos e valide assinatura", "CWE-347"))
+        return results
+
+    async def test_weak_cipher(self, target: str, scan_id: str) -> List[Dict]:
+        """Weak SSL/TLS Ciphers"""
+        results = []
+        if target.startswith("https://"):
+            r = await self.make_request(target)
+            # Simple check - in reality would need SSL library
+            if r["status_code"] > 0:
+                results.append(self.vuln(scan_id, "low", "Verificação de Ciphers Fraco",
+                    "Recomenda-se análise detalhada de ciphers SSL/TLS", "Cryptography", target,
+                    "SSL/TLS Connection", "Conexão estabelecida",
+                    "Use apenas ciphers fortes (TLS 1.2+)", "CWE-327"))
+        return results
+
     # ==================== MAIN SCAN ====================
 
     async def scan_target(self, scan_id: str, target: str, scan_type: str, status_callback=None) -> List[Dict]:
