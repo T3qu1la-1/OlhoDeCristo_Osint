@@ -58,9 +58,9 @@ const CoordinatesAnalyzer = () => {
     const lngSec = ((lngAbs - lngDeg - lngMin / 60) * 3600).toFixed(2);
     
     return {
-      lat: `${latDeg}°${latMin}'${latSec}"${latDir}`,
-      lng: `${lngDeg}°${lngMin}'${lngSec}"${lngDir}`,
-      full: `${latDeg}°${latMin}'${latSec}"${latDir} ${lngDeg}°${lngMin}'${lngSec}"${lngDir}`
+      lat: `${latDeg}Â°${latMin}'${latSec}"${latDir}`,
+      lng: `${lngDeg}Â°${lngMin}'${lngSec}"${lngDir}`,
+      full: `${latDeg}Â°${latMin}'${latSec}"${latDir} ${lngDeg}Â°${lngMin}'${lngSec}"${lngDir}`
     };
   }, []);
 
@@ -101,7 +101,7 @@ const CoordinatesAnalyzer = () => {
     <div className="coords-analyzer-tool">
       <div className="tool-header-section">
         <h2><Target size={24} /> Analisador de Coordenadas</h2>
-        <p>Converta formatos e obtenha informações detalhadas sobre qualquer localização</p>
+        <p>Converta formatos e obtenha informaÃ§Ãµes detalhadas sobre qualquer localizaÃ§Ã£o</p>
       </div>
 
       {/* Input Section */}
@@ -138,12 +138,12 @@ const CoordinatesAnalyzer = () => {
 
         {/* Quick Examples */}
         <div className="quick-coords">
-          <h4>Exemplos rápidos:</h4>
+          <h4>Exemplos rÃ¡pidos:</h4>
           <div className="coord-examples">
             {[
               { name: 'Cristo Redentor', lat: -22.9519, lng: -43.2105 },
               { name: 'Torre Eiffel', lat: 48.8584, lng: 2.2945 },
-              { name: 'Estátua da Liberdade', lat: 40.6892, lng: -74.0445 },
+              { name: 'EstÃ¡tua da Liberdade', lat: 40.6892, lng: -74.0445 },
               { name: 'Grande Muralha', lat: 40.4319, lng: 116.5704 }
             ].map(place => (
               <button 
@@ -163,7 +163,7 @@ const CoordinatesAnalyzer = () => {
         <div className="analysis-results">
           {/* Format Conversions */}
           <div className="result-card">
-            <h3>🎯 Formatos de Coordenadas</h3>
+            <h3>ð¯ Formatos de Coordenadas</h3>
             <div className="format-list">
               <div className="format-item">
                 <strong>Decimal (DD):</strong>
@@ -211,10 +211,10 @@ const CoordinatesAnalyzer = () => {
           {analysis && (
             <>
               <div className="result-card">
-                <h3>🗺️ Informações da Localização</h3>
+                <h3>ðºï¸ InformaÃ§Ãµes da LocalizaÃ§Ã£o</h3>
                 <div className="location-info">
                   <div className="info-item">
-                    <strong>Endereço Completo:</strong>
+                    <strong>EndereÃ§o Completo:</strong>
                     <p>{analysis.display_name}</p>
                   </div>
                   
@@ -222,13 +222,13 @@ const CoordinatesAnalyzer = () => {
                     <div className="address-grid">
                       {analysis.address.country && (
                         <div className="info-item">
-                          <strong>País:</strong>
-                          <p>🏳️ {analysis.address.country}</p>
+                          <strong>PaÃ­s:</strong>
+                          <p>ð³ï¸ {analysis.address.country}</p>
                         </div>
                       )}
                       {analysis.address.state && (
                         <div className="info-item">
-                          <strong>Estado/Região:</strong>
+                          <strong>Estado/RegiÃ£o:</strong>
                           <p>{analysis.address.state}</p>
                         </div>
                       )}
@@ -255,7 +255,7 @@ const CoordinatesAnalyzer = () => {
               </div>
 
               <button className="export-button" onClick={exportAnalysis}>
-                <Download size={20} /> Exportar Análise Completa
+                <Download size={20} /> Exportar AnÃ¡lise Completa
               </button>
             </>
           )}
@@ -264,10 +264,10 @@ const CoordinatesAnalyzer = () => {
 
       {/* Info Panel */}
       <div className="coords-info">
-        <h3>🎯 Funcionalidades:</h3>
+        <h3>ð¯ Funcionalidades:</h3>
         <div className="info-grid">
           <div className="info-card-small">
-            <h4>Conversão de Formatos</h4>
+            <h4>ConversÃ£o de Formatos</h4>
             <ul>
               <li>Decimal (DD)</li>
               <li>DMS (Graus/Minutos/Segundos)</li>
@@ -277,16 +277,16 @@ const CoordinatesAnalyzer = () => {
           <div className="info-card-small">
             <h4>Reverse Geocoding</h4>
             <ul>
-              <li>Endereço completo</li>
-              <li>Informações administrativas</li>
-              <li>Tipo de localização</li>
+              <li>EndereÃ§o completo</li>
+              <li>InformaÃ§Ãµes administrativas</li>
+              <li>Tipo de localizaÃ§Ã£o</li>
             </ul>
           </div>
           <div className="info-card-small">
-            <h4>Exportação</h4>
+            <h4>ExportaÃ§Ã£o</h4>
             <ul>
               <li>JSON com todos os dados</li>
-              <li>Cópia rápida para clipboard</li>
+              <li>CÃ³pia rÃ¡pida para clipboard</li>
               <li>Links diretos para mapas</li>
             </ul>
           </div>

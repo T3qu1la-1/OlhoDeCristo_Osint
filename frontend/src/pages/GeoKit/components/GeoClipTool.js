@@ -199,28 +199,28 @@ const GeoClipTool = () => {
   }, [predictions]);
 
   return (
-    <div className=\"geoclip-tool\">
+    <div className="geoclip-tool">
       {/* Header */}
-      <div className=\"tool-header-section\">
-        <h2><Zap size={24} /> GeoClip AI - Geolocalização por Imagem</h2>
-        <p>Upload de imagem para predição de localização usando deep learning</p>
+      <div className="tool-header-section">
+        <h2><Zap size={24} /> GeoClip AI - GeolocalizaÃ§Ã£o por Imagem</h2>
+        <p>Upload de imagem para prediÃ§Ã£o de localizaÃ§Ã£o usando deep learning</p>
       </div>
 
-      <div className=\"geoclip-layout\">
+      <div className="geoclip-layout">
         {/* Left Panel - Upload & Results */}
-        <div className=\"geoclip-sidebar\">
+        <div className="geoclip-sidebar">
           {/* Upload Area */}
           {!image ? (
-            <div className=\"upload-zone\">
+            <div className="upload-zone">
               <input 
-                type=\"file\" 
-                accept=\"image/*\" 
+                type="file" 
+                accept="image/*" 
                 onChange={handleImageUpload}
-                id=\"geoclip-upload\"
+                id="geoclip-upload"
                 style={{display: 'none'}}
               />
-              <label htmlFor=\"geoclip-upload\" className=\"upload-label\">
-                <div className=\"upload-icon\">
+              <label htmlFor="geoclip-upload" className="upload-label">
+                <div className="upload-icon">
                   <Upload size={48} />
                 </div>
                 <h3>Upload de Imagem</h3>
@@ -229,16 +229,16 @@ const GeoClipTool = () => {
               </label>
             </div>
           ) : (
-            <div className=\"image-preview-section\">
-              <div className=\"image-preview-header\">
+            <div className="image-preview-section">
+              <div className="image-preview-header">
                 <h3>Imagem Carregada</h3>
-                <button className=\"remove-btn\" onClick={removeImage}>
+                <button className="remove-btn" onClick={removeImage}>
                   <X size={20} />
                 </button>
               </div>
               
-              <div className=\"image-preview\">
-                <img src={image} alt=\"Uploaded\" />
+              <div className="image-preview">
+                <img src={image} alt="Uploaded" />
               </div>
 
               <button 
@@ -248,13 +248,13 @@ const GeoClipTool = () => {
               >
                 {isAnalyzing ? (
                   <>
-                    <Loader2 className=\"spin\" size={20} />
+                    <Loader2 className="spin" size={20} />
                     Analisando...
                   </>
                 ) : (
                   <>
                     <Zap size={20} />
-                    Analisar Localização
+                    Analisar LocalizaÃ§Ã£o
                   </>
                 )}
               </button>
@@ -263,15 +263,15 @@ const GeoClipTool = () => {
 
           {/* Results */}
           {predictions && (
-            <div className=\"predictions-results\">
-              <div className=\"results-header\">
-                <h3>Top 10 Predições</h3>
-                <button className=\"export-btn\" onClick={exportResults}>
+            <div className="predictions-results">
+              <div className="results-header">
+                <h3>Top 10 PrediÃ§Ãµes</h3>
+                <button className="export-btn" onClick={exportResults}>
                   <Download size={16} /> Exportar
                 </button>
               </div>
               
-              <div className=\"predictions-list\">
+              <div className="predictions-list">
                 {predictions.slice(0, 10).map(pred => (
                   <div 
                     key={pred.rank}
@@ -288,17 +288,17 @@ const GeoClipTool = () => {
                       });
                     }}
                   >
-                    <div className=\"pred-rank\">#{pred.rank}</div>
-                    <div className=\"pred-info\">
-                      <div className=\"pred-coords\">
+                    <div className="pred-rank">#{pred.rank}</div>
+                    <div className="pred-info">
+                      <div className="pred-coords">
                         {pred.lat.toFixed(4)}, {pred.lon.toFixed(4)}
                       </div>
-                      <div className=\"pred-confidence\">
-                        Confiança: {(pred.confidence * 100).toFixed(1)}%
+                      <div className="pred-confidence">
+                        ConfianÃ§a: {(pred.confidence * 100).toFixed(1)}%
                       </div>
-                      <div className=\"confidence-bar\">
+                      <div className="confidence-bar">
                         <div 
-                          className=\"confidence-fill\" 
+                          className="confidence-fill" 
                           style={{width: `${pred.confidence * 100}%`}}
                         ></div>
                       </div>
@@ -311,7 +311,7 @@ const GeoClipTool = () => {
         </div>
 
         {/* Right Panel - Map */}
-        <div className=\"geoclip-map-container\">
+        <div className="geoclip-map-container">
           <DeckGL
             initialViewState={INITIAL_VIEW_STATE}
             viewState={viewState}
@@ -326,40 +326,40 @@ const GeoClipTool = () => {
           </DeckGL>
 
           {!predictions && (
-            <div className=\"map-placeholder\">
+            <div className="map-placeholder">
               <Zap size={64} />
-              <h3>Aguardando Análise</h3>
-              <p>Upload uma imagem e clique em \"Analisar Localização\"</p>
+              <h3>Aguardando AnÃ¡lise</h3>
+              <p>Upload uma imagem e clique em "Analisar LocalizaÃ§Ã£o"</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Info Section */}
-      <div className=\"geoclip-info\">
-        <h3>🤖 Como Funciona o GeoClip:</h3>
-        <div className=\"info-grid\">
-          <div className=\"info-card\">
+      <div className="geoclip-info">
+        <h3>ð¤ Como Funciona o GeoClip:</h3>
+        <div className="info-grid">
+          <div className="info-card">
             <h4>1. Upload da Imagem</h4>
             <p>Envie uma foto de qualquer lugar do mundo</p>
           </div>
-          <div className=\"info-card\">
-            <h4>2. Análise com IA</h4>
-            <p>GeoClip analisa características visuais (arquitetura, vegetação, clima)</p>
+          <div className="info-card">
+            <h4>2. AnÃ¡lise com IA</h4>
+            <p>GeoClip analisa caracterÃ­sticas visuais (arquitetura, vegetaÃ§Ã£o, clima)</p>
           </div>
-          <div className=\"info-card\">
-            <h4>3. Predições</h4>
-            <p>Recebe top-K localizações mais prováveis com confiança</p>
+          <div className="info-card">
+            <h4>3. PrediÃ§Ãµes</h4>
+            <p>Recebe top-K localizaÃ§Ãµes mais provÃ¡veis com confianÃ§a</p>
           </div>
-          <div className=\"info-card\">
-            <h4>4. Visualização</h4>
+          <div className="info-card">
+            <h4>4. VisualizaÃ§Ã£o</h4>
             <p>Heatmap interativo mostrando probabilidades</p>
           </div>
         </div>
         
-        <div className=\"warning-box\">
-          ⚠️ <strong>Demo Mode:</strong> Esta é uma simulação. Para análise real, é necessário backend com modelo GeoClip.
-          O modelo real usa CLIP + embeddings geográficos para predição precisa.
+        <div className="warning-box">
+          â ï¸ <strong>Demo Mode:</strong> Esta Ã© uma simulaÃ§Ã£o. Para anÃ¡lise real, Ã© necessÃ¡rio backend com modelo GeoClip.
+          O modelo real usa CLIP + embeddings geogrÃ¡ficos para prediÃ§Ã£o precisa.
         </div>
       </div>
     </div>

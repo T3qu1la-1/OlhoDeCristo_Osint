@@ -65,7 +65,7 @@ const LocationSearch = () => {
       }
     } catch (error) {
       console.error('Search error:', error);
-      alert('Erro ao buscar localização. Tente novamente.');
+      alert('Erro ao buscar localizaÃ§Ã£o. Tente novamente.');
     } finally {
       setIsSearching(false);
     }
@@ -168,8 +168,8 @@ const LocationSearch = () => {
         {/* Search Panel */}
         <div className="search-panel">
           <div className="search-header">
-            <h2><Search size={24} /> Busca Global de Localizações</h2>
-            <p>Pesquise endereços, cidades, POIs em todo o mundo</p>
+            <h2><Search size={24} /> Busca Global de LocalizaÃ§Ãµes</h2>
+            <p>Pesquise endereÃ§os, cidades, POIs em todo o mundo</p>
           </div>
 
           {/* Search Box */}
@@ -200,7 +200,7 @@ const LocationSearch = () => {
 
           {/* Quick Searches */}
           <div className="quick-searches">
-            <h4>Buscas Rápidas:</h4>
+            <h4>Buscas RÃ¡pidas:</h4>
             <div className="quick-btns">
               {[
                 'Torre Eiffel, Paris',
@@ -227,7 +227,7 @@ const LocationSearch = () => {
           {results.length > 0 && (
             <div className="results-section">
               <div className="results-header">
-                <h3>📍 {results.length} Resultados</h3>
+                <h3>ð {results.length} Resultados</h3>
                 <button className="export-btn-small" onClick={exportResults}>
                   <Download size={16} /> Exportar
                 </button>
@@ -251,8 +251,8 @@ const LocationSearch = () => {
                       </div>
                       {result.address && (
                         <div className="result-address">
-                          {result.address.country && `🏳️ ${result.address.country}`}
-                          {result.address.state && ` • ${result.address.state}`}
+                          {result.address.country && `ð³ï¸ ${result.address.country}`}
+                          {result.address.state && ` â¢ ${result.address.state}`}
                         </div>
                       )}
                     </div>
@@ -266,7 +266,7 @@ const LocationSearch = () => {
           {/* Search History */}
           {searchHistory.length > 0 && (
             <div className="search-history">
-              <h4>📜 Histórico Recente:</h4>
+              <h4>ð HistÃ³rico Recente:</h4>
               <div className="history-list">
                 {searchHistory.map((item, index) => (
                   <button 
@@ -314,12 +314,12 @@ const LocationSearch = () => {
 
       {/* Info */}
       <div className="search-info">
-        <h3>🌍 Powered by OpenStreetMap Nominatim</h3>
+        <h3>ð Powered by OpenStreetMap Nominatim</h3>
         <ul>
-          <li>✓ Busca global em mais de 220 países</li>
-          <li>✓ Geocoding e reverse geocoding</li>
-          <li>✓ POIs, endereços, cidades, monumentos</li>
-          <li>✓ Dados atualizados do OpenStreetMap</li>
+          <li>â Busca global em mais de 220 paÃ­ses</li>
+          <li>â Geocoding e reverse geocoding</li>
+          <li>â POIs, endereÃ§os, cidades, monumentos</li>
+          <li>â Dados atualizados do OpenStreetMap</li>
         </ul>
       </div>
     </div>
