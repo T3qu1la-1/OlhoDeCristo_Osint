@@ -18,7 +18,7 @@ Criar uma aplicação web unificando:
 - **Frontend**: React.js com navegação via state
 - **Backend**: FastAPI (Python)
 - **Banco de Dados**: MongoDB
-- **Scanner**: 35 testes de vulnerabilidades
+- **Scanner**: 73 testes de vulnerabilidades
 
 ## Funcionalidades Implementadas
 
