@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Search, Copy, PlayCircle, X } from 'lucide-react';
-import { dorksData } from '../utils/dorksData';
+import { Search, Copy, PlayCircle, X, ExternalLink, Filter } from 'lucide-react';
+import { dorksDatabase } from '../utils/dorksDatabase';
 import './OSINTPage.css';
 
 const OSINTPage = () => {
-  const [mode, setMode] = useState('sec');
   const [target, setTarget] = useState('');
   const [keyword, setKeyword] = useState('');
   const [query, setQuery] = useState('');
@@ -12,10 +11,14 @@ const OSINTPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [customDork, setCustomDork] = useState('');
   const [searchFilter, setSearchFilter] = useState('');
+  const [activeTab, setActiveTab] = useState('categories'); // 'categories' ou 'targeted'
+  const [copiedIndex, setCopiedIndex] = useState(null);
 
-  const filteredDorks = dorksData.filter(d => 
-    d.type === mode && 
-    d.category.toLowerCase().includes(searchFilter.toLowerCase())
+  const totalDorks = dorksDatabase.getTotalCount();
+  
+  const filteredCategories = dorksDatabase.categories.filter(cat => 
+    cat.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    cat.description.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
   const openModal = (category) => {
@@ -23,20 +26,22 @@ const OSINTPage = () => {
     setShowModal(true);
   };
 
-  const executeDork = (dorkCode) => {
-    let fullQuery = '';
+  const executeDork = (dorkQuery) => {
+    let fullQuery = dorkQuery;
     
-    if (mode === 'sec' && target) {
-      if (!dorkCode.includes('site:')) {
-        fullQuery += `site:${target} `;
+    // Se tem target, substitui {TARGET} ou adiciona site:
+    if (target) {
+      if (fullQuery.includes('{TARGET}')) {
+        fullQuery = fullQuery.replace(/{TARGET}/g, target);
+      } else if (!fullQuery.includes('site:')) {
+        fullQuery = `site:${target} ${fullQuery}`;
       }
     }
     
-    if (keyword) {
-      fullQuery += `"${keyword}" `;
+    // Adiciona keyword se existir
+    if (keyword && !fullQuery.includes(keyword)) {
+      fullQuery += ` "${keyword}"`;
     }
-    
-    fullQuery += dorkCode;
     
     setQuery(fullQuery.trim());
     openGoogle(fullQuery.trim());
@@ -47,15 +52,16 @@ const OSINTPage = () => {
     window.open(`https://www.google.com/search?q=${encoded}`, '_blank');
   };
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text, index) => {
     navigator.clipboard.writeText(text);
-    // Toast notification could be added here
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
   };
 
   const runQuickSearch = () => {
     let searchQuery = '';
     
-    if (mode === 'sec' && target) {
+    if (target) {
       searchQuery += `site:${target} `;
     }
     
@@ -74,7 +80,7 @@ const OSINTPage = () => {
     
     let finalQuery = customDork;
     
-    if (mode === 'sec' && target && !customDork.includes('site:')) {
+    if (target && !customDork.includes('site:')) {
       finalQuery = `site:${target} ${customDork}`;
     }
     
@@ -86,6 +92,16 @@ const OSINTPage = () => {
     setCustomDork(customDork + operator + ' ');
   };
 
+  const executeTargetedDork = (dork) => {
+    if (!target) {
+      alert('Por favor, insira um domínio alvo primeiro!');
+      return;
+    }
+    const query = dork.query.replace(/{TARGET}/g, target);
+    setQuery(query);
+    openGoogle(query);
+  };
+
   return (
     <div className="osint-page">
       <header className="osint-header">
@@ -94,64 +110,38 @@ const OSINTPage = () => {
           <span className="pro-badge">PRO</span>
         </h1>
         <p className="subtitle">
-          <Search size={16} /> ADVANCED PASSIVE RECONNAISSANCE PLATFORM
+          <Search size={16} /> {totalDorks}+ GOOGLE DORKS ORGANIZADOS
         </p>
       </header>
 
-      <div className="mode-switcher">
-        <button 
-          className={`mode-btn ${mode === 'sec' ? 'active' : ''}`}
-          onClick={() => setMode('sec')}
-        >
-          <div className="mode-icon">🛡️</div>
-          <div className="mode-info">
-            <h3>CYBER_INTEL</h3>
-            <p>Pentesting • Bug Bounty • Red Team</p>
-          </div>
-        </button>
-        
-        <button 
-          className={`mode-btn ${mode === 'media' ? 'active' : ''}`}
-          onClick={() => setMode('media')}
-        >
-          <div className="mode-icon">🔍</div>
-          <div className="mode-info">
-            <h3>FILE_HUNTER</h3>
-            <p>Documents • Media • Personal Info</p>
-          </div>
-        </button>
-      </div>
-
       <div className="search-config">
-        <h2>SEARCH CONFIGURATION</h2>
+        <h2>⚙️ CONFIGURAÇÃO DE BUSCA</h2>
         
-        {mode === 'sec' && (
-          <div className="input-group">
-            <label>TARGET DOMAIN</label>
-            <div className="input-wrapper">
-              <span className="prefix">site:</span>
-              <input
-                type="text"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                placeholder="example.com"
-              />
-              <button onClick={() => setTarget('')} className="clear-btn">
-                <X size={16} />
-              </button>
-            </div>
+        <div className="input-group">
+          <label>🎯 DOMÍNIO ALVO (opcional)</label>
+          <div className="input-wrapper">
+            <span className="prefix">site:</span>
+            <input
+              type="text"
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+              placeholder="exemplo.com.br"
+            />
+            <button onClick={() => setTarget('')} className="clear-btn">
+              <X size={16} />
+            </button>
           </div>
-        )}
+        </div>
 
         <div className="input-group">
-          <label>KEYWORD / QUERY</label>
+          <label>🔑 PALAVRA-CHAVE</label>
           <div className="input-wrapper">
             <span className="prefix">#</span>
             <input
               type="text"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              placeholder="Enter search term..."
+              placeholder="senha, admin, backup..."
             />
             <button onClick={() => setKeyword('')} className="clear-btn">
               <X size={16} />
@@ -162,19 +152,19 @@ const OSINTPage = () => {
         <div className="button-group">
           <button onClick={runQuickSearch} className="btn-primary">
             <PlayCircle size={20} />
-            EXECUTE SCAN
+            BUSCA RÁPIDA
           </button>
           <button onClick={() => {setTarget(''); setKeyword(''); setQuery('');}} className="btn-secondary">
-            RESET
+            LIMPAR
           </button>
         </div>
 
         {query && (
           <div className="query-preview">
             <div className="query-header">
-              <span>GENERATED QUERY:</span>
-              <button onClick={() => copyToClipboard(query)}>
-                <Copy size={16} /> COPY
+              <span>QUERY GERADA:</span>
+              <button onClick={() => copyToClipboard(query, 'main')}>
+                <Copy size={16} /> {copiedIndex === 'main' ? 'COPIADO!' : 'COPIAR'}
               </button>
             </div>
             <code>{query}</code>
@@ -182,41 +172,109 @@ const OSINTPage = () => {
         )}
       </div>
 
-      <div className="dorks-section">
-        <div className="section-header">
-          <h2>AVAILABLE CATEGORIES</h2>
-          <input
-            type="text"
-            placeholder="🔍 Search category..."
-            value={searchFilter}
-            onChange={(e) => setSearchFilter(e.target.value)}
-            className="search-input"
-          />
-        </div>
-
-        <div className="dorks-grid">
-          {filteredDorks.map((category, idx) => (
-            <div 
-              key={idx}
-              className="dork-card"
-              onClick={() => openModal(category)}
-            >
-              <div className="dork-icon" style={{background: `${category.color}20`, borderColor: `${category.color}40`, color: category.color}}>
-                {category.icon}
-              </div>
-              <h3>{category.category}</h3>
-              <p>Explore {category.items.length} dorks</p>
-            </div>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div className="tabs-container">
+        <button 
+          className={`tab-btn ${activeTab === 'categories' ? 'active' : ''}`}
+          onClick={() => setActiveTab('categories')}
+        >
+          📚 CATEGORIAS ({dorksDatabase.categories.length})
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'targeted' ? 'active' : ''}`}
+          onClick={() => setActiveTab('targeted')}
+        >
+          🎯 DORKS POR ALVO ({dorksDatabase.targetedDorks.length})
+        </button>
       </div>
 
+      {activeTab === 'categories' && (
+        <div className="dorks-section">
+          <div className="section-header">
+            <h2>📂 CATEGORIAS DE DORKS</h2>
+            <div className="search-box">
+              <Filter size={16} />
+              <input
+                type="text"
+                placeholder="Filtrar categorias..."
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                className="search-input"
+              />
+            </div>
+          </div>
+
+          <div className="dorks-grid">
+            {filteredCategories.map((category, idx) => (
+              <div 
+                key={idx}
+                className="dork-card"
+                onClick={() => openModal(category)}
+              >
+                <div className="dork-icon">
+                  {category.icon}
+                </div>
+                <h3>{category.name}</h3>
+                <p>{category.description}</p>
+                <span className="dork-count">{category.dorks.length} dorks</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'targeted' && (
+        <div className="targeted-section">
+          <div className="section-header">
+            <h2>🎯 DORKS PARA ALVO ESPECÍFICO</h2>
+            <p className="section-subtitle">
+              {target ? `Alvo atual: ${target}` : 'Insira um domínio acima para usar estes dorks'}
+            </p>
+          </div>
+
+          <div className="targeted-dorks-list">
+            {dorksDatabase.targetedDorks.map((dork, idx) => (
+              <div key={idx} className="targeted-dork-item">
+                <div className="targeted-dork-info">
+                  <span className="dork-number">{idx + 1}</span>
+                  <div className="dork-details">
+                    <code className="dork-query">
+                      {target ? dork.query.replace(/{TARGET}/g, target) : dork.query}
+                    </code>
+                    <span className="dork-desc">{dork.description}</span>
+                  </div>
+                </div>
+                <div className="targeted-dork-actions">
+                  <button 
+                    onClick={() => executeTargetedDork(dork)} 
+                    className="btn-execute"
+                    disabled={!target}
+                  >
+                    <ExternalLink size={16} />
+                  </button>
+                  <button 
+                    onClick={() => copyToClipboard(
+                      target ? dork.query.replace(/{TARGET}/g, target) : dork.query, 
+                      `targeted-${idx}`
+                    )} 
+                    className="btn-copy"
+                  >
+                    <Copy size={16} />
+                    {copiedIndex === `targeted-${idx}` ? '✓' : ''}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="custom-dork-section">
-        <h2>ADVANCED CONSTRUCTOR</h2>
-        <p className="section-description">Create custom queries combining advanced Google operators</p>
+        <h2>🔧 CONSTRUTOR AVANÇADO</h2>
+        <p className="section-description">Crie queries customizadas combinando operadores do Google</p>
         
         <div className="operator-chips">
-          {['site:', 'filetype:', 'inurl:', 'intitle:', 'intext:', 'ext:', 'cache:', 'related:'].map(op => (
+          {['site:', 'filetype:', 'inurl:', 'intitle:', 'intext:', 'ext:', 'cache:', 'related:', 'OR', 'AND', '-', '"'].map(op => (
             <button key={op} onClick={() => insertOperator(op)} className="chip">
               <code>{op}</code>
             </button>
@@ -227,11 +285,11 @@ const OSINTPage = () => {
           <textarea
             value={customDork}
             onChange={(e) => setCustomDork(e.target.value)}
-            placeholder='Example: site:example.com inurl:admin filetype:php intitle:"login"'
+            placeholder='Exemplo: site:exemplo.com inurl:admin filetype:php intitle:"login"'
             rows="3"
           />
           <button onClick={runCustomDork} className="execute-btn">
-            <PlayCircle size={20} /> EXECUTE
+            <PlayCircle size={20} /> EXECUTAR
           </button>
         </div>
       </div>
@@ -240,25 +298,29 @@ const OSINTPage = () => {
         <div className="modal" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{selectedCategory.category}</h3>
+              <div className="modal-title">
+                <span className="modal-icon">{selectedCategory.icon}</span>
+                <h3>{selectedCategory.name}</h3>
+              </div>
               <button onClick={() => setShowModal(false)} className="modal-close">
                 <X size={20} />
               </button>
             </div>
+            <p className="modal-description">{selectedCategory.description}</p>
             <div className="modal-body">
-              {selectedCategory.items.map((item, idx) => (
+              {selectedCategory.dorks.map((dork, idx) => (
                 <div key={idx} className="dork-item">
                   <div className="dork-item-header">
                     <span className="dork-number">{idx + 1}</span>
-                    <span className="dork-label">{item.label}</span>
+                    <span className="dork-label">{dork.description}</span>
                   </div>
-                  <code className="dork-code">{item.dork}</code>
+                  <code className="dork-code">{dork.query}</code>
                   <div className="dork-actions">
-                    <button onClick={() => executeDork(item.dork)} className="btn-execute">
-                      <PlayCircle size={16} /> Execute
+                    <button onClick={() => executeDork(dork.query)} className="btn-execute">
+                      <ExternalLink size={16} /> Executar
                     </button>
-                    <button onClick={() => copyToClipboard(item.dork)} className="btn-copy">
-                      <Copy size={16} /> Copy
+                    <button onClick={() => copyToClipboard(dork.query, `modal-${idx}`)} className="btn-copy">
+                      <Copy size={16} /> {copiedIndex === `modal-${idx}` ? 'Copiado!' : 'Copiar'}
                     </button>
                   </div>
                 </div>
