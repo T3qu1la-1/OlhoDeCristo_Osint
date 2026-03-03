@@ -121,7 +121,7 @@ const LandingPage = ({ onNavigate }) => {
                 <div className="scan-line"></div>
                 <h2 className="developer-title">&gt; DESENVOLVEDOR</h2>
                 <div className="developer-info">
-                  <p className="mono-text">NOME: [SEU NOME AQUI]</p>
+                  <p className="mono-text">NOME: TEQU1LA</p>
                   <p className="mono-text">ROLE: SECURITY RESEARCHER & DEVELOPER</p>
                   <p className="mono-text">STACK: PYTHON | REACT | FASTAPI | MONGODB</p>
                   <p className="mono-text">FOCUS: OFFENSIVE SECURITY & OSINT</p>
