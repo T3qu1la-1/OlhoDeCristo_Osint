@@ -13,6 +13,9 @@ import Academy from './pages/Academy';
 import EmojiCrypt from './pages/EmojiCrypt';
 import ExifHunter from './pages/ExifHunter';
 import GeoKit from './pages/GeoKit/index';
+import UsernameSearch from './pages/UsernameSearch';
+import Generators from './pages/Generators';
+import PayloadGenerator from './pages/PayloadGenerator';
 import Sidebar from './components/Sidebar';
 import './styles/global.css';
 import './App.css';
@@ -49,6 +52,22 @@ const AppContent = () => {
         return <Dashboard onNavigate={setCurrentPage} />;
       case 'pentester':
         return <PentesterPage />;
+      case 'username-search':
+        return <UsernameSearch />;
+      case 'face-recognition':
+        return <div className="tool-page"><h1>FACE RECOGNITION - EM DESENVOLVIMENTO</h1></div>;
+      case 'generators':
+        return <Generators />;
+      case 'payload-gen':
+        return <PayloadGenerator />;
+      case 'api-tester':
+        return <div className="tool-page"><h1>API SECURITY TESTER - EM DESENVOLVIMENTO</h1></div>;
+      case 'data-viz':
+        return <div className="tool-page"><h1>DATA VISUALIZER - EM DESENVOLVIMENTO</h1></div>;
+      case 'website-cloner':
+        return <div className="tool-page"><h1>WEBSITE CLONER - EM DESENVOLVIMENTO</h1></div>;
+      case 'reverse-image':
+        return <div className="tool-page"><h1>REVERSE IMAGE SEARCH - EM DESENVOLVIMENTO</h1></div>;
       case 'reports':
         return <Reports />;
       case 'osint':
