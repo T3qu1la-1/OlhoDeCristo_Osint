@@ -5,7 +5,7 @@ from datetime import datetime
 class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
-    name: str = Field(..., min_length=2)
+    username: str = Field(..., min_length=2)
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -14,13 +14,13 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     id: str
     email: str
-    name: str
+    username: str
     created_at: datetime
 
 class UserInDB(BaseModel):
     id: str
     email: str
-    name: str
+    username: str
     hashed_password: str
     created_at: datetime
     last_login: Optional[datetime] = None

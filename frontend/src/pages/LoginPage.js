@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
+import { ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './AuthPages.css';
 
@@ -8,7 +7,6 @@ const LoginPage = ({ onNavigate }) => {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -29,92 +27,72 @@ const LoginPage = ({ onNavigate }) => {
   };
 
   return (
-    <div className="auth-page">
-      <motion.div 
-        className="auth-container"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="auth-card">
-          <div className="auth-header">
-            <img src="https://customer-assets.emergentagent.com/job_meu-site-23/artifacts/320hwwea_Gemini_Generated_Image_mykhfqmykhfqmykh.png" alt="Logo" className="auth-logo" />
-            <h1>Bem-vindo de volta</h1>
-            <p>Entre na sua conta para continuar</p>
+    <div className="auth-minimal">
+      <div className="auth-container-minimal">
+        <div className="auth-box">
+          <div className="auth-header-minimal">
+            <h1 className="auth-title">LOGIN</h1>
+            <div className="title-underline"></div>
           </div>
 
-          <form onSubmit={handleSubmit} className="auth-form">
+          <form onSubmit={handleSubmit} className="auth-form-minimal">
             {error && (
-              <motion.div 
-                className="error-message"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <AlertCircle size={18} />
-                {error}
-              </motion.div>
+              <div className="error-box">
+                <AlertCircle size={16} />
+                <span>{error}</span>
+              </div>
             )}
 
-            <div className="form-group">
-              <label>Email</label>
-              <div className="input-wrapper">
-                <Mail size={20} />
-                <input 
-                  type="email" 
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="input-group">
+              <label>EMAIL</label>
+              <input 
+                type="email" 
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
             </div>
 
-            <div className="form-group">
-              <label>Senha</label>
-              <div className="input-wrapper">
-                <Lock size={20} />
-                <input 
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button 
-                  type="button"
-                  className="toggle-password"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
+            <div className="input-group">
+              <label>SENHA</label>
+              <input 
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
             </div>
 
-            <motion.button 
+            <button 
               type="submit"
-              className="btn btn-primary btn-block"
+              className="btn-minimal"
               disabled={loading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
             >
-              {loading ? 'Entrando...' : (
+              {loading ? 'ENTRANDO...' : (
                 <>
-                  Entrar <ArrowRight size={20} />
+                  ENTRAR <ArrowRight size={18} />
                 </>
               )}
-            </motion.button>
+            </button>
           </form>
 
-          <div className="auth-footer">
+          <div className="auth-footer-minimal">
             <p>
-              Não tem uma conta?{' '}
-              <button onClick={() => onNavigate('register')} className="link-button">
-                Criar conta
+              NÃO TEM CONTA?{' '}
+              <button onClick={() => onNavigate('register')} className="link-minimal">
+                REGISTRAR
               </button>
             </p>
+            <button onClick={() => onNavigate('landing')} className="link-minimal">
+              VOLTAR
+            </button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

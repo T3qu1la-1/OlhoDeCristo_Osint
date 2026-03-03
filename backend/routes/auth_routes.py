@@ -28,7 +28,7 @@ async def register(user: UserCreate):
     user_dict = {
         "id": user_id,
         "email": user.email,
-        "name": user.name,
+        "username": user.username,
         "hashed_password": hash_password(user.password),
         "created_at": now,
         "last_login": now
@@ -45,7 +45,7 @@ async def register(user: UserCreate):
         "user": {
             "id": user_id,
             "email": user.email,
-            "name": user.name,
+            "username": user.username,
             "created_at": now
         }
     }
@@ -77,7 +77,7 @@ async def login(credentials: UserLogin):
         "user": {
             "id": user['id'],
             "email": user['email'],
-            "name": user['name'],
+            "username": user['username'],
             "created_at": user['created_at']
         }
     }
@@ -92,7 +92,7 @@ async def get_me(current_user: dict = Depends(get_current_user)):
     return {
         "id": user['id'],
         "email": user['email'],
-        "name": user['name'],
+        "username": user['username'],
         "created_at": user['created_at']
     }
 
