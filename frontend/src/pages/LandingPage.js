@@ -126,6 +126,35 @@ const LandingPage = ({ onNavigate }) => {
                   <p className="mono-text">STACK: PYTHON | REACT | FASTAPI | MONGODB</p>
                   <p className="mono-text">FOCUS: OFFENSIVE SECURITY & OSINT</p>
                 </div>
+                <div className="scan-line" style={{margin: '1rem 0'}}></div>
+                <h3 className="developer-title" style={{fontSize: '0.9rem', marginBottom: '0.5rem'}}>&gt; ESTATÍSTICAS DO PROJETO</h3>
+                <div className="developer-info" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem'}}>
+                  <div style={{padding: '0.75rem', background: 'rgba(0, 255, 65, 0.05)', border: '1px solid var(--primary)', borderRadius: '4px'}}>
+                    <p className="mono-text" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>PYTHON</p>
+                    <p className="mono-text" style={{fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold'}}>4,500</p>
+                    <p className="mono-text" style={{fontSize: '0.75rem', color: '#666'}}>linhas</p>
+                  </div>
+                  <div style={{padding: '0.75rem', background: 'rgba(0, 255, 65, 0.05)', border: '1px solid var(--primary)', borderRadius: '4px'}}>
+                    <p className="mono-text" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>JAVASCRIPT/JSX</p>
+                    <p className="mono-text" style={{fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold'}}>11,975</p>
+                    <p className="mono-text" style={{fontSize: '0.75rem', color: '#666'}}>linhas</p>
+                  </div>
+                  <div style={{padding: '0.75rem', background: 'rgba(0, 255, 65, 0.05)', border: '1px solid var(--primary)', borderRadius: '4px'}}>
+                    <p className="mono-text" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>CSS</p>
+                    <p className="mono-text" style={{fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold'}}>5,396</p>
+                    <p className="mono-text" style={{fontSize: '0.75rem', color: '#666'}}>linhas</p>
+                  </div>
+                  <div style={{padding: '0.75rem', background: 'rgba(0, 255, 65, 0.1)', border: '2px solid var(--primary)', borderRadius: '4px'}}>
+                    <p className="mono-text" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>TOTAL</p>
+                    <p className="mono-text" style={{fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold'}}>21,871</p>
+                    <p className="mono-text" style={{fontSize: '0.75rem', color: '#666'}}>linhas de código</p>
+                  </div>
+                </div>
+                <div className="developer-info" style={{marginTop: '1rem'}}>
+                  <p className="mono-text" style={{fontSize: '0.8rem', color: '#888'}}>
+                    ARQUIVOS: 13 Python | 84 JavaScript/JSX | 17 CSS
+                  </p>
+                </div>
               </div>
 
               <div className="actions">

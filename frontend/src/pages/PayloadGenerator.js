@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Terminal, Copy, Download, Search } from 'lucide-react';
+import { Terminal, Copy, Download, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import './ToolPages.css';
 
 const PayloadGenerator = () => {
@@ -211,6 +211,21 @@ const PayloadGenerator = () => {
     }
   };
 
+  const payloadKeys = Object.keys(payloads);
+  const currentIndex = payloadKeys.indexOf(activeTab);
+
+  const handlePrevious = () => {
+    const newIndex = currentIndex > 0 ? currentIndex - 1 : payloadKeys.length - 1;
+    setActiveTab(payloadKeys[newIndex]);
+    setSearchTerm('');
+  };
+
+  const handleNext = () => {
+    const newIndex = currentIndex < payloadKeys.length - 1 ? currentIndex + 1 : 0;
+    setActiveTab(payloadKeys[newIndex]);
+    setSearchTerm('');
+  };
+
   const handleCopy = (payload) => {
     const final = customParam ? payload.replace(/10\.0\.0\.1/g, customParam).replace(/4444/g, customParam.split(':')[1] || '4444') : payload;
     navigator.clipboard.writeText(final);
@@ -250,15 +265,93 @@ const PayloadGenerator = () => {
       </div>
 
       <div className='tool-content'>
-        <div className='tabs'>
-          {Object.entries(payloads).map(([key, value]) => (
-            <button
+        {/* Navegador com setas */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '1rem',
+          marginBottom: '2rem',
+          padding: '1.5rem',
+          background: 'rgba(0, 255, 65, 0.05)',
+          border: '2px solid var(--primary)',
+          borderRadius: '8px'
+        }}>
+          <button 
+            onClick={handlePrevious}
+            style={{
+              background: 'var(--primary)',
+              color: '#000',
+              border: 'none',
+              padding: '0.75rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '4px',
+              transition: 'all 0.3s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <ChevronLeft size={24} />
+          </button>
+          
+          <div style={{
+            flex: 1,
+            textAlign: 'center',
+            color: 'var(--primary)',
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            letterSpacing: '2px',
+            textTransform: 'uppercase'
+          }}>
+            {payloads[activeTab].label}
+          </div>
+          
+          <button 
+            onClick={handleNext}
+            style={{
+              background: 'var(--primary)',
+              color: '#000',
+              border: 'none',
+              padding: '0.75rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '4px',
+              transition: 'all 0.3s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <ChevronRight size={24} />
+          </button>
+        </div>
+
+        {/* Indicador de posição */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '0.5rem',
+          marginBottom: '2rem'
+        }}>
+          {payloadKeys.map((key, index) => (
+            <div
               key={key}
-              className={`tab ${activeTab === key ? 'active' : ''}`}
               onClick={() => { setActiveTab(key); setSearchTerm(''); }}
-            >
-              {value.label}
-            </button>
+              style={{
+                width: index === currentIndex ? '40px' : '10px',
+                height: '10px',
+                background: index === currentIndex ? 'var(--primary)' : '#333',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+                boxShadow: index === currentIndex ? '0 0 10px var(--primary)' : 'none'
+              }}
+              title={payloads[key].label}
+            />
           ))}
         </div>
 
