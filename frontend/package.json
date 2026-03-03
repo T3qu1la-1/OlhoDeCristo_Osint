@@ -47,6 +47,7 @@
     "date-fns": "^4.1.0",
     "deck.gl": "^9.2.10",
     "embla-carousel-react": "^8.6.0",
+    "es-abstract": "^1.24.1",
     "exif-js": "^2.3.0",
     "framer-motion": "^12.34.3",
     "immer": "^11.1.4",

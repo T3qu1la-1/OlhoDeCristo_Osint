@@ -7,7 +7,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://projeto-completo-5.preview.emergentagent.com/api"
+BASE_URL = "https://repo-clone-ready.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "antonio.silva@exemplo.com"
 TEST_USER_PASSWORD = "MinhaSenh@123"
 TEST_USER_NAME = "Antonio Silva"

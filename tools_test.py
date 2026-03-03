@@ -15,7 +15,7 @@ from PIL import Image
 import os
 
 # Backend URL from frontend .env
-BACKEND_URL = "https://projeto-completo-5.preview.emergentagent.com"
+BACKEND_URL = "https://repo-clone-ready.preview.emergentagent.com"
 
 class ToolsEndpointTester:
     def __init__(self, base_url):
