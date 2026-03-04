@@ -122,9 +122,6 @@ const LandingPage = ({ onNavigate }) => {
                 <h2 className="developer-title">&gt; DESENVOLVEDOR</h2>
                 <div className="developer-info">
                   <p className="mono-text">NOME: TEQU1LA</p>
-                  <p className="mono-text">ROLE: SECURITY RESEARCHER & DEVELOPER</p>
-                  <p className="mono-text">STACK: PYTHON | REACT | FASTAPI | MONGODB</p>
-                  <p className="mono-text">FOCUS: OFFENSIVE SECURITY & OSINT</p>
                 </div>
                 <div className="scan-line" style={{margin: '1rem 0'}}></div>
                 <h3 className="developer-title" style={{fontSize: '0.9rem', marginBottom: '0.5rem'}}>&gt; ESTATÍSTICAS DO PROJETO</h3>
@@ -136,17 +133,17 @@ const LandingPage = ({ onNavigate }) => {
                   </div>
                   <div style={{padding: '0.75rem', background: 'rgba(0, 255, 65, 0.05)', border: '1px solid var(--primary)', borderRadius: '4px'}}>
                     <p className="mono-text" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>JAVASCRIPT/JSX</p>
-                    <p className="mono-text" style={{fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold'}}>11,975</p>
+                    <p className="mono-text" style={{fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold'}}>12,686</p>
                     <p className="mono-text" style={{fontSize: '0.75rem', color: '#666'}}>linhas</p>
                   </div>
                   <div style={{padding: '0.75rem', background: 'rgba(0, 255, 65, 0.05)', border: '1px solid var(--primary)', borderRadius: '4px'}}>
                     <p className="mono-text" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>CSS</p>
-                    <p className="mono-text" style={{fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold'}}>5,396</p>
+                    <p className="mono-text" style={{fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold'}}>5,400</p>
                     <p className="mono-text" style={{fontSize: '0.75rem', color: '#666'}}>linhas</p>
                   </div>
                   <div style={{padding: '0.75rem', background: 'rgba(0, 255, 65, 0.1)', border: '2px solid var(--primary)', borderRadius: '4px'}}>
                     <p className="mono-text" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>TOTAL</p>
-                    <p className="mono-text" style={{fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold'}}>21,871</p>
+                    <p className="mono-text" style={{fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold'}}>22,586</p>
                     <p className="mono-text" style={{fontSize: '0.75rem', color: '#666'}}>linhas de código</p>
                   </div>
                 </div>
