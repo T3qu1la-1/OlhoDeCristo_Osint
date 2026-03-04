@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-<parameter name="TrendingUp, Upload, Download, Info, Zap } from 'lucide-react';
+import { TrendingUp, Upload, Download, Info, Zap } from 'lucide-react';
 import './ToolPages.css';
 
 const DataVisualizer = () => {
