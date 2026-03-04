@@ -48,22 +48,6 @@ const Dashboard = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="stats-bar">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="stat-item">
-              <Icon size={20} />
-              <div className="stat-info">
-                <div className="stat-value">{stat.value}</div>
-                <div className="stat-label">{stat.label}</div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       {/* Main Content */}
       <div className="dash-content">
         <div className="section-title">

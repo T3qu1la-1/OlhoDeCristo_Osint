@@ -335,23 +335,46 @@ const PayloadGenerator = () => {
           display: 'flex',
           justifyContent: 'center',
           gap: '0.5rem',
-          marginBottom: '2rem'
+          marginBottom: '2rem',
+          flexWrap: 'wrap'
         }}>
           {payloadKeys.map((key, index) => (
             <div
               key={key}
               onClick={() => { setActiveTab(key); setSearchTerm(''); }}
               style={{
-                width: index === currentIndex ? '40px' : '10px',
-                height: '10px',
-                background: index === currentIndex ? 'var(--primary)' : '#333',
-                borderRadius: '5px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.25rem',
                 cursor: 'pointer',
-                transition: 'all 0.3s',
-                boxShadow: index === currentIndex ? '0 0 10px var(--primary)' : 'none'
+                padding: '0.5rem',
+                borderRadius: '4px',
+                background: index === currentIndex ? 'rgba(0, 255, 65, 0.1)' : 'transparent',
+                transition: 'all 0.3s'
               }}
               title={payloads[key].label}
-            />
+            >
+              <div
+                style={{
+                  width: index === currentIndex ? '40px' : '12px',
+                  height: '12px',
+                  background: index === currentIndex ? 'var(--primary)' : '#333',
+                  borderRadius: '6px',
+                  transition: 'all 0.3s',
+                  boxShadow: index === currentIndex ? '0 0 10px var(--primary)' : 'none'
+                }}
+              />
+              <span style={{
+                fontSize: '0.65rem',
+                color: index === currentIndex ? 'var(--primary)' : '#666',
+                fontWeight: index === currentIndex ? 'bold' : 'normal',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                {payloads[key].label.split(' ')[0]}
+              </span>
+            </div>
           ))}
         </div>
 

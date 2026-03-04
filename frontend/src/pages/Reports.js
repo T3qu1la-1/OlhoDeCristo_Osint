@@ -18,7 +18,9 @@ const Reports = () => {
 
   const loadScans = async () => {
     try {
-      const response = await axios.get(`${API}/scans`);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/scans`, { headers });
       const completedScans = response.data.filter(s => s.status === 'completed');
       setScans(completedScans);
     } catch (error) {
@@ -28,7 +30,9 @@ const Reports = () => {
 
   const loadVulnerabilities = async (scanId) => {
     try {
-      const response = await axios.get(`${API}/scans/${scanId}/vulnerabilities`);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/scans/${scanId}/vulnerabilities`, { headers });
       setVulnerabilities(response.data);
     } catch (error) {
       console.error('Erro ao carregar vulnerabilidades:', error);

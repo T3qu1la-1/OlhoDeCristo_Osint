@@ -94,10 +94,55 @@
 /* Buttons */
 .btn-tool {
   padding: 1rem 2rem;
-  background: #fff;
-  border: 2px solid #fff;
+  background: #00ff41;
+  border: 2px solid #00ff41;
   color: #000;
   font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-transform: uppercase;
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.5), inset 0 0 10px rgba(0, 255, 65, 0.2);
+}
+
+.btn-tool:hover:not(:disabled) {
+  background: #000;
+  color: #00ff41;
+  box-shadow: 0 0 30px rgba(0, 255, 65, 0.8), inset 0 0 20px rgba(0, 255, 65, 0.1);
+}
+
+.btn-tool:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-tool.btn-secondary {
+  background: transparent;
+  border: 2px solid #00ff41;
+  color: #00ff41;
+}
+
+.btn-tool.btn-secondary:hover {
+  background: #00ff41;
+  color: #000;
+}
+
+.btn-tool.btn-danger {
+  background: #ff6b35;
+  border: 2px solid #ff6b35;
+  color: #000;
+}
+
+.btn-tool.btn-danger:hover {
+  background: transparent;
+  color: #ff6b35;
+}
   font-size: 0.875rem;
   font-weight: bold;
   letter-spacing: 0.2em;
