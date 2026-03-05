@@ -14,7 +14,7 @@ import time
 from typing import Dict, Optional
 
 # Configuration
-BACKEND_URL = "https://repo-clone-ready.preview.emergentagent.com/api"
+BACKEND_URL = "https://automated-site.preview.emergentagent.com/api"
 
 class OlhosDeDeusBackendTester:
     """Complete backend tester for Olhos De Deus"""
