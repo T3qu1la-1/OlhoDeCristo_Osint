@@ -1,6 +1,8 @@
 import os
 import jwt
 import bcrypt
+import json
+from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import HTTPException, Security
@@ -11,6 +13,30 @@ ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
 security = HTTPBearer()
+
+# 👑 Carregar credenciais de admin do JSON
+ADMIN_CREDENTIALS_FILE = Path(__file__).parent / 'admin_credentials.json'
+
+def load_admin_credentials():
+    """Carrega credenciais de admin do JSON"""
+    try:
+        with open(ADMIN_CREDENTIALS_FILE, 'r') as f:
+            data = json.load(f)
+            admin = data.get('admin', {})
+            # Se não tiver hash, gerar
+            if 'PLACEHOLDER' in admin.get('password_hash', ''):
+                # Senha: Celo0506
+                admin['password_hash'] = hash_password('Celo0506')
+                # Salvar de volta
+                data['admin'] = admin
+                with open(ADMIN_CREDENTIALS_FILE, 'w') as fw:
+                    json.dump(data, fw, indent=2)
+            return admin
+    except Exception as e:
+        print(f"Erro ao carregar admin credentials: {e}")
+        return None
+
+ADMIN_CREDENTIALS = load_admin_credentials()
 
 def hash_password(password: str) -> str:
     """Hash password with bcrypt"""
@@ -48,5 +74,27 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
     payload = decode_access_token(token)
     user_id = payload.get("sub")
     if user_id is None:
-        raise HTTPException(status_code=401, detail="Credenciais inválidas")
-    return {"id": user_id, "email": payload.get("email")}
+        raise HTTPException(status_code=401, detail="Token inválido")
+    
+    return {
+        "id": user_id,
+        "email": payload.get("email"),
+        "role": payload.get("role", "user")
+    }
+
+async def get_current_admin(credentials: HTTPAuthorizationCredentials = Security(security)):
+    """Get current user and verify if admin"""
+    user = await get_current_user(credentials)
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Acesso negado. Apenas administradores.")
+    return user
+
+def check_admin_credentials(email: str, password: str) -> bool:
+    """Verifica se as credenciais são do admin"""
+    if not ADMIN_CREDENTIALS:
+        return False
+    
+    if email == ADMIN_CREDENTIALS.get('email'):
+        return verify_password(password, ADMIN_CREDENTIALS.get('password_hash'))
+    
+    return False

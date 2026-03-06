@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Toaster } from './components/ui/sonner';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import protection from './protection';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -24,6 +25,7 @@ import WebsiteCloner from './pages/WebsiteCloner';
 import ReverseImageSearch from './pages/ReverseImageSearch';
 import FaceRecognition from './pages/FaceRecognition';
 import ExploitTester from './pages/ExploitTester';
+import AdminPanel from './pages/AdminPanel';
 import Sidebar from './components/Sidebar';
 import './styles/global.css';
 import './App.css';
@@ -31,6 +33,11 @@ import './App.css';
 const AppContent = () => {
   const { user, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState(user ? 'dashboard' : 'landing');
+
+  // 🚫 Ativar proteção contra inspeção
+  useEffect(() => {
+    protection.init();
+  }, []);
 
   if (loading) {
     return (
@@ -58,6 +65,8 @@ const AppContent = () => {
       case 'dashboard':
       case 'home':
         return <Dashboard onNavigate={setCurrentPage} />;
+      case 'admin':
+        return <AdminPanel />;
       case 'pentester':
         return <PentesterPage />;
       case 'username-search':
