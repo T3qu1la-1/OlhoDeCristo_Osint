@@ -318,6 +318,19 @@ backend:
         agent: "testing"
         comment: "✅ PAGINAÇÃO TOTALMENTE FUNCIONAL: Testado GET /api/scans?page=1&limit=5 com usuário autenticado. Sistema retorna estrutura correta: 'scans' (array) + 'pagination' (object) com todos os 6 campos obrigatórios: page=1, limit=5, total=0, total_pages=0, has_next=false, has_prev=false. Validação de parâmetros funcionando (page: 1-10000, limit: 1-100). Sistema está pronto para listar grandes volumes de scans sem sobrecarga de performance. Paginação CONFIRMADA."
 
+
+  - task: "POST /api/tools/exploit-tester - Múltiplos Payloads"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/routes/tools_routes.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "✅ ATUALIZADO: Endpoint agora aceita array de payloads ao invés de payload único. Parâmetros: target (URL validada), payloads (array, max 50), mode (custom/objetivo). Testa cada payload individualmente, detecta tipo de exploit automaticamente. Retorna análise agregada: totalTested, vulnerableCount, vulnerablePayloads (array), exploitTypes detectados, allResults com detalhes de cada teste. Retrocompatível (aceita payload único também). Validação de URL implementada. PRECISA TESTAR COM MÚLTIPLOS PAYLOADS."
+
 frontend:
   - task: "PentesterPage - Autenticação JWT e UI da porcentagem"
     implemented: true
@@ -367,6 +380,18 @@ frontend:
         agent: "main"
         comment: "✅ IMPLEMENTADO: Sistema de toast usando Sonner configurado no App.js (position: top-right, duration: 4s, rich colors). Integrado no AuthContext para mostrar feedback em: login (sucesso/erro), register (sucesso/erro), logout. Mensagens personalizadas com emojis e cores. PRECISA TESTAR VISUALMENTE."
 
+  - task: "Exploit Tester - Seleção Manual de Payloads"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/ExploitTester.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "✅ REFEITO COMPLETAMENTE: Nova interface com 2 modos: 1) CUSTOM - Usuário adiciona seus próprios payloads (quantos quiser), 2) OBJETIVO - Usuário escolhe o que quer fazer (6 categorias: 💾 Banco de dados vazados, 🔓 Tentar acesso, 📂 Vazamento de arquivos, ⚡ XSS, 💻 RCE, 🔑 API/Token). Cada objetivo tem 10+ payloads prontos que o usuário pode selecionar individualmente ou todos. Interface com checkboxes, ícones coloridos, seleção múltipla. Backend atualizado para aceitar array de payloads (max 50). Retorna análise agregada de todos os payloads testados. Sistema de toast integrado. PRECISA TESTAR FUNCIONALIDADE."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
@@ -375,9 +400,10 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Exploit Tester - Seleção Manual de Payloads"
+    - "POST /api/tools/exploit-tester - Múltiplos Payloads"
     - "Error Boundary (React) - Proteção contra crashes"
     - "Sistema de Notificações Toast (Sonner)"
-    - "ReverseImageSearch - Busca automatizada ao invés de links"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -393,5 +419,9 @@ agent_communication:
     message: "🎯 BACKEND COMPLETAMENTE TESTADO E FUNCIONANDO ✅ - Executados 17 testes abrangentes com 100% de sucesso. CONFIRMADO: 1) Sistema de autenticação JWT completo e seguro, 2) Privacidade total de scans por usuário (cada usuário vê apenas seus scans), 3) Performance otimizada do scanner (0.05s para criar scans), 4) Todas as 4 ferramentas funcionais (EXIF, cloning, face analysis, reverse image search), 5) Proteção contra acesso não autorizado, 6) Novo endpoint de busca reversa automática com 4 motores funcionando. BACKEND PRONTO PARA PRODUÇÃO."
   - agent: "main"
     message: "🛡️ PROTEÇÕES DE SEGURANÇA IMPLEMENTADAS (Item 8, 9, 2, 1) ✅ - Implementadas 6 melhorias críticas de segurança: 1) 🚦 RATE LIMITING: Proteção contra DDoS/DoS/Botnets com limites por endpoint (100/min global, 10/min auth, 5/min scans, 20/min tools). 2) 🔍 INPUT VALIDATION: Proteção contra 18+ tipos de ataques (SQL/NoSQL Injection, XSS, Command Injection, Path Traversal, etc). 3) 🔒 SECURITY HEADERS: Headers de segurança (CSP, HSTS, X-Frame-Options, etc). 4) 📊 PAGINAÇÃO: Sistema de paginação no GET /api/scans (max 100 itens/página). 5) ⚛️ ERROR BOUNDARY: Proteção React contra crashes. 6) 🔔 TOAST SYSTEM: Notificações visuais (Sonner) integradas no auth. SecurityMiddleware aplicado globalmente. Validações em todos endpoints críticos. Arquivos máx 10MB. Documentação completa em /app/SECURITY_DOCUMENTATION.md. BACKEND PRONTO - PRECISA TESTAR BACKEND E FRONTEND."
+  - agent: "testing"
+    message: "🛡️ TESTES DE SEGURANÇA 100% SUCESSO ✅ - Testados 4 componentes críticos: 1) RATE LIMITING funcionando (Auth bloqueado após 10 req/min, Scans após 5 req/min, HTTP 429), 2) INPUT VALIDATION funcionando (SQL injection, Command injection, XSS BLOQUEADOS), 3) SECURITY HEADERS presentes (5/5 headers confirmados), 4) PAGINAÇÃO funcionando (estrutura correta com 6 campos). Todas as proteções contra DDoS, payloads maliciosos, e ataques estão ATIVAS e OPERACIONAIS."
+  - agent: "main"
+    message: "💣 EXPLOIT TESTER REFORMULADO ✅ - Página completamente refeita conforme solicitado pelo usuário: 1) SELEÇÃO MANUAL DE PAYLOADS: Usuário escolhe quais payloads usar ao invés do sistema decidir. 2) DOIS MODOS: a) CUSTOM - Usuário adiciona seus próprios payloads (quantos quiser, +/-), b) OBJETIVO - 6 categorias (💾 Banco de dados vazados, 🔓 Tentar acesso, 📂 Vazamento de arquivos, ⚡ XSS, 💻 RCE, 🔑 API/Token) com 10-13 payloads cada. 3) SELEÇÃO INDIVIDUAL: Checkboxes para selecionar payloads específicos ou botão 'Selecionar Todos'. 4) BACKEND ATUALIZADO: Aceita array de payloads (max 50), testa todos, retorna análise agregada. 5) Toast notifications integradas. PRECISA TESTAR FRONTEND E BACKEND JUNTOS."
   - agent: "testing"
     message: "🛡️ SEGURANÇA BACKEND COMPLETAMENTE TESTADA E FUNCIONANDO ✅ - Executados testes abrangentes nas 4 melhorias críticas de segurança: 1) 🚦 RATE LIMITING: Funcionando perfeitamente - Auth endpoints bloqueados após 10 req/min, Scans após 5 req/min, retorna HTTP 429 com mensagens específicas. 2) 🔍 INPUT VALIDATION: SQL injection bloqueado via validação email, XSS/Command injection detectados e bloqueados, 18+ padrões maliciosos protegidos. 3) 🔒 SECURITY HEADERS: Todos os 5 headers críticos presentes (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, HSTS, CSP). 4) 📊 PAGINAÇÃO: Estrutura correta com todos campos obrigatórios, parâmetros validados. Sistema de segurança ROBUSTO e pronto para produção. Rate limiting tão efetivo que bloqueou nossos próprios testes múltiplas vezes."

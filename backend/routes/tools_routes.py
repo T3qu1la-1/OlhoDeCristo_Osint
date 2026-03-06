@@ -297,47 +297,64 @@ async def reverse_image_search(data: dict):
 
 @router.post("/exploit-tester")
 async def exploit_tester(data: dict):
-    """Teste automatizado de exploração com análise inteligente"""
+    """Teste automatizado de exploração com múltiplos payloads selecionados pelo usuário"""
     try:
         target = data.get("target")
-        payload = data.get("payload")
+        payloads = data.get("payloads", [])
+        mode = data.get("mode", "custom")
         
-        if not target or not payload:
-            raise HTTPException(status_code=400, detail="Target e payload são obrigatórios")
+        # 🛡️ Validar URL do target
+        validated_target = validate_url_input(target)
         
-        # Detectar tipo de exploit automaticamente
-        exploit_type = detect_exploit_type(payload)
+        # Se payloads for lista vazia ou None, tentar pegar payload único (retrocompatibilidade)
+        if not payloads:
+            single_payload = data.get("payload")
+            if single_payload:
+                payloads = [single_payload]
         
-        # Gerar variações do payload
-        variations = generate_payload_variations(payload, exploit_type)
+        if not payloads or len(payloads) == 0:
+            raise HTTPException(status_code=400, detail="Pelo menos 1 payload é obrigatório")
+        if not payloads or len(payloads) == 0:
+            raise HTTPException(status_code=400, detail="Pelo menos 1 payload é obrigatório")
         
-        # Testar todas as variações
-        results = []
-        vulnerable = False
+        # 🛡️ Limitar número de payloads (max 50 para não sobrecarregar)
+        if len(payloads) > 50:
+            raise HTTPException(status_code=400, detail="Máximo de 50 payloads por teste")
+        
+        # Resultados agregados
+        all_results = []
+        vulnerable_payloads = []
+        exploit_types_detected = set()
         
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }
         
+        # Testar cada payload fornecido pelo usuário
         async with aiohttp.ClientSession() as session:
-            for variant in variations:
+            for payload in payloads:
+                # Detectar tipo de exploit
+                exploit_type = detect_exploit_type(payload)
+                exploit_types_detected.add(exploit_type)
+                
                 try:
                     start_time = asyncio.get_event_loop().time()
                     
-                    # Testar GET
-                    test_url = f"{target}?param={variant}"
+                    # Testar GET com payload
+                    test_url = f"{validated_target}?test={payload}"
                     async with session.get(test_url, headers=headers, timeout=aiohttp.ClientTimeout(total=10), ssl=False) as response:
                         response_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
                         content = await response.text()
                         
                         # Análise de vulnerabilidade
-                        is_vulnerable = analyze_vulnerability(variant, content, response.status, exploit_type)
+                        is_vulnerable = analyze_vulnerability(payload, content, response.status, exploit_type)
                         
                         if is_vulnerable:
-                            vulnerable = True
+                            vulnerable_payloads.append(payload)
                         
-                        results.append({
-                            "payload": variant,
+                        all_results.append({
+                            "payload": payload,
+                            "exploitType": exploit_type,
                             "method": "GET",
                             "status": response.status,
                             "responseTime": response_time,
@@ -345,8 +362,9 @@ async def exploit_tester(data: dict):
                             "responseLength": len(content)
                         })
                 except Exception as e:
-                    results.append({
-                        "payload": variant,
+                    all_results.append({
+                        "payload": payload,
+                        "exploitType": exploit_type,
                         "method": "GET",
                         "status": 0,
                         "responseTime": 0,
@@ -355,33 +373,43 @@ async def exploit_tester(data: dict):
                     })
         
         # Análise final
+        vulnerable = len(vulnerable_payloads) > 0
+        
         if vulnerable:
-            confidence = calculate_confidence(results)
-            exploitation_guide = generate_exploitation_guide(exploit_type, target, payload)
-            mitigation = generate_mitigation(exploit_type)
+            # Pegar tipo de exploit mais comum
+            main_exploit_type = max(exploit_types_detected, key=lambda x: sum(1 for r in all_results if r.get('exploitType') == x and r.get('vulnerable')))
+            confidence = calculate_confidence(all_results)
+            mitigation = generate_mitigation(main_exploit_type)
             
             return {
                 "vulnerable": True,
-                "exploitType": exploit_type,
-                "method": "GET",
+                "exploitTypes": list(exploit_types_detected),
+                "mainExploitType": main_exploit_type,
                 "confidence": confidence,
-                "analysis": f"O sistema detectou que o alvo é vulnerável a {exploit_type}. "
-                           f"{sum(1 for r in results if r['vulnerable'])} de {len(results)} variações testadas foram bem-sucedidas. "
-                           f"A vulnerabilidade foi confirmada com {confidence}% de confiança.",
-                "variations": results,
-                "exploitation": exploitation_guide,
+                "totalTested": len(payloads),
+                "vulnerableCount": len(vulnerable_payloads),
+                "analysis": f"⚠️ SISTEMA VULNERÁVEL! Detectadas {len(vulnerable_payloads)} vulnerabilidades de {len(payloads)} payloads testados. "
+                           f"Tipos de ataque detectados: {', '.join(exploit_types_detected)}. "
+                           f"Confiança: {confidence}%.",
+                "vulnerablePayloads": vulnerable_payloads,
+                "allResults": all_results,
                 "mitigation": mitigation
             }
         else:
             return {
                 "vulnerable": False,
-                "exploitType": exploit_type,
-                "analysis": f"O sistema testou {len(results)} variações de {exploit_type} mas não encontrou vulnerabilidades. "
-                           f"O alvo parece estar protegido ou o payload não é efetivo neste contexto.",
-                "variations": results,
-                "message": "Sistema aparentemente seguro contra este tipo de ataque."
+                "exploitTypes": list(exploit_types_detected),
+                "totalTested": len(payloads),
+                "vulnerableCount": 0,
+                "analysis": f"✓ Sistema testado com {len(payloads)} payloads diferentes. "
+                           f"Tipos testados: {', '.join(exploit_types_detected)}. "
+                           f"Nenhuma vulnerabilidade foi detectada. O sistema parece estar protegido.",
+                "allResults": all_results,
+                "message": "Sistema aparentemente seguro contra os ataques testados."
             }
             
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
