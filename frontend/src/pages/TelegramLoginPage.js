@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, ArrowLeft, ExternalLink } from 'lucide-react';
+import { Send, ArrowLeft, ExternalLink, Loader } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import './AuthPages.css';
@@ -22,14 +22,10 @@ const TelegramLoginPage = ({ onNavigate, onLoginSuccess }) => {
     setLoading(true);
 
     try {
-      // Obter IP do cliente (aproximado)
-      const ipResponse = await axios.get('https://api.ipify.org?format=json');
-      const ip_address = ipResponse.data.ip;
-
+      // Backend vai capturar o IP automaticamente
       const response = await axios.post(`${BACKEND_URL}/api/auth/telegram/login`, {
         telegram_id: telegramId,
-        password,
-        ip_address
+        password
       });
 
       const { access_token, user } = response.data;
@@ -39,15 +35,14 @@ const TelegramLoginPage = ({ onNavigate, onLoginSuccess }) => {
 
       toast.success(`Bem-vindo, ${user.first_name}! 🚀`);
 
-      // Callback para App.js atualizar o estado
-      if (onLoginSuccess) {
-        onLoginSuccess(user);
-      }
+      // Recarregar para atualizar AuthContext
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
 
     } catch (error) {
       const errorMsg = error.response?.data?.detail || 'Erro ao fazer login via Telegram';
       toast.error(`❌ ${errorMsg}`);
-    } finally {
       setLoading(false);
     }
   };
@@ -59,7 +54,7 @@ const TelegramLoginPage = ({ onNavigate, onLoginSuccess }) => {
 
   return (
     <div className="auth-page">
-      <div className="auth-container">
+      <div className="auth-container" style={{ maxWidth: '500px' }}>
         <button 
           className="back-button"
           onClick={() => onNavigate('landing')}
@@ -69,36 +64,73 @@ const TelegramLoginPage = ({ onNavigate, onLoginSuccess }) => {
         </button>
 
         <div className="auth-header">
-          <div className="logo-container">
-            <Send size={48} color="#00bfff" />
+          <div className="logo-container" style={{ 
+            background: 'linear-gradient(135deg, #00bfff 0%, #0080ff 100%)',
+            boxShadow: '0 0 30px rgba(0, 191, 255, 0.5)'
+          }}>
+            <Send size={48} color="#fff" />
           </div>
-          <h1>Login via Telegram</h1>
-          <p>Use seu Telegram ID e senha cadastrados no bot</p>
+          <h1 style={{ 
+            background: 'linear-gradient(135deg, #00bfff, #0080ff)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontSize: '2rem',
+            marginBottom: '0.5rem'
+          }}>
+            Login via Telegram
+          </h1>
+          <p style={{ color: '#888', fontSize: '0.95rem' }}>
+            Use seu <strong style={{ color: '#00bfff' }}>Telegram ID</strong> e senha do bot
+          </p>
         </div>
 
-        <form className="auth-form" onSubmit={handleLogin}>
+        <form className="auth-form" onSubmit={handleLogin} style={{ marginTop: '2rem' }}>
           <div className="form-group">
-            <label>🆔 Telegram ID</label>
+            <label style={{ color: '#00bfff', fontWeight: '600', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🆔 Telegram ID
+            </label>
             <input
               type="text"
-              placeholder="Seu Telegram ID único"
+              placeholder="Ex: 123456789"
               value={telegramId}
               onChange={(e) => setTelegramId(e.target.value)}
               disabled={loading}
+              style={{
+                background: 'rgba(0, 191, 255, 0.05)',
+                border: '2px solid rgba(0, 191, 255, 0.3)',
+                color: '#fff',
+                padding: '0.9rem',
+                fontSize: '1rem',
+                transition: 'all 0.3s'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#00bfff'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(0, 191, 255, 0.3)'}
             />
-            <small style={{ color: '#888', fontSize: '0.85rem' }}>
-              Exemplo: 123456789
+            <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.3rem', display: 'block' }}>
+              Seu ID único do Telegram (somente números)
             </small>
           </div>
 
           <div className="form-group">
-            <label>🔐 Senha</label>
+            <label style={{ color: '#00bfff', fontWeight: '600', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🔐 Senha
+            </label>
             <input
               type="password"
               placeholder="Senha cadastrada no bot"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              style={{
+                background: 'rgba(0, 191, 255, 0.05)',
+                border: '2px solid rgba(0, 191, 255, 0.3)',
+                color: '#fff',
+                padding: '0.9rem',
+                fontSize: '1rem',
+                transition: 'all 0.3s'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#00bfff'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(0, 191, 255, 0.3)'}
             />
           </div>
 
@@ -106,18 +138,61 @@ const TelegramLoginPage = ({ onNavigate, onLoginSuccess }) => {
             type="submit" 
             className="auth-button"
             disabled={loading}
+            style={{
+              background: loading ? '#666' : 'linear-gradient(135deg, #00bfff, #0080ff)',
+              padding: '1rem',
+              fontSize: '1.05rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem',
+              boxShadow: loading ? 'none' : '0 4px 20px rgba(0, 191, 255, 0.4)',
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
           >
-            {loading ? 'Entrando...' : 'Entrar via Telegram'}
+            {loading ? (
+              <>
+                <Loader className="spin" size={20} />
+                Entrando...
+              </>
+            ) : (
+              <>
+                <Send size={20} />
+                Entrar via Telegram
+              </>
+            )}
           </button>
         </form>
 
-        <div className="auth-divider">
-          <span>Não tem conta?</span>
+        <div className="auth-divider" style={{ margin: '2rem 0' }}>
+          <span style={{ color: '#666' }}>Não tem conta?</span>
         </div>
 
         <button 
           className="auth-button-secondary"
           onClick={openBot}
+          style={{
+            background: 'rgba(0, 191, 255, 0.1)',
+            border: '2px solid #00bfff',
+            color: '#00bfff',
+            padding: '1rem',
+            fontSize: '1rem',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.75rem',
+            transition: 'all 0.3s'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'rgba(0, 191, 255, 0.2)';
+            e.target.style.transform = 'translateY(-2px)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'rgba(0, 191, 255, 0.1)';
+            e.target.style.transform = 'translateY(0)';
+          }}
         >
           <ExternalLink size={20} />
           Abrir @MarfinnoBot para Registrar
@@ -125,32 +200,77 @@ const TelegramLoginPage = ({ onNavigate, onLoginSuccess }) => {
 
         <div style={{ 
           marginTop: '2rem', 
-          padding: '1rem', 
-          background: 'rgba(0, 191, 255, 0.1)', 
-          borderRadius: '8px',
-          borderLeft: '4px solid #00bfff'
+          padding: '1.5rem', 
+          background: 'rgba(0, 191, 255, 0.05)', 
+          borderRadius: '12px',
+          border: '2px solid rgba(0, 191, 255, 0.2)'
         }}>
-          <h3 style={{ color: '#00bfff', marginBottom: '0.5rem', fontSize: '1rem' }}>
+          <h3 style={{ 
+            color: '#00bfff', 
+            marginBottom: '1rem', 
+            fontSize: '1.1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
             📱 Como funciona:
           </h3>
-          <ol style={{ color: '#ccc', fontSize: '0.9rem', marginLeft: '1.5rem', lineHeight: '1.8' }}>
-            <li>Abra o bot <strong>@MarfinnoBot</strong> no Telegram</li>
-            <li>Envie <code>/start</code> para se registrar</li>
-            <li>Escolha uma senha forte</li>
-            <li>Use seu <strong>Telegram ID</strong> + senha aqui para fazer login</li>
-            <li>Seu IP será registrado automaticamente</li>
+          <ol style={{ 
+            color: '#ccc', 
+            fontSize: '0.95rem', 
+            marginLeft: '1.5rem', 
+            lineHeight: '2',
+            paddingLeft: '0.5rem'
+          }}>
+            <li style={{ marginBottom: '0.5rem' }}>
+              Abra o bot <strong style={{ color: '#00bfff' }}>@MarfinnoBot</strong> no Telegram
+            </li>
+            <li style={{ marginBottom: '0.5rem' }}>
+              Envie <code style={{ 
+                background: 'rgba(0, 191, 255, 0.1)', 
+                padding: '0.2rem 0.5rem', 
+                borderRadius: '4px',
+                color: '#00bfff'
+              }}>/start</code> para se registrar
+            </li>
+            <li style={{ marginBottom: '0.5rem' }}>
+              Escolha uma senha forte (mínimo 6 caracteres)
+            </li>
+            <li style={{ marginBottom: '0.5rem' }}>
+              Use seu <strong style={{ color: '#00bfff' }}>Telegram ID</strong> + senha aqui
+            </li>
+            <li>
+              Seu IP será registrado automaticamente 🔒
+            </li>
           </ol>
         </div>
 
-        <div className="auth-links">
-          <button onClick={() => onNavigate('login')}>
+        <div className="auth-links" style={{ marginTop: '1.5rem' }}>
+          <button 
+            onClick={() => onNavigate('login')}
+            style={{ color: '#888', fontSize: '0.9rem' }}
+          >
             Login com Email
           </button>
-          <button onClick={() => onNavigate('register')}>
+          <span style={{ color: '#333' }}>|</span>
+          <button 
+            onClick={() => onNavigate('register')}
+            style={{ color: '#888', fontSize: '0.9rem' }}
+          >
             Registrar com Email
           </button>
         </div>
       </div>
+
+      <style>{`
+        .spin {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

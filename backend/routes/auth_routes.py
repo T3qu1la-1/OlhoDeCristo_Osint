@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 import uuid
@@ -151,11 +151,13 @@ async def logout(current_user: dict = Depends(get_current_user)):
 telegram_users_collection = db['telegram_users']
 
 @router.post("/telegram/login")
-async def telegram_login(data: dict):
-    """Login via Telegram ID + senha + IP"""
+async def telegram_login(data: dict, request: Request):
+    """Login via Telegram ID + senha + IP (capturado automaticamente)"""
     telegram_id = data.get("telegram_id")
     password = data.get("password")
-    ip_address = data.get("ip_address")
+    
+    # Capturar IP do request
+    ip_address = request.client.host
     
     if not telegram_id or not password:
         raise HTTPException(status_code=400, detail="Telegram ID e senha são obrigatórios")
@@ -202,6 +204,7 @@ async def telegram_login(data: dict):
     user_id = telegram_user['id']
     access_token = create_access_token(data={
         "sub": user_id,
+        "email": f"telegram_{telegram_id}@telegram.user",
         "telegram_id": str(telegram_id),
         "role": "telegram_user"
     })

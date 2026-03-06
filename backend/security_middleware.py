@@ -36,10 +36,10 @@ class RateLimiter:
         
         # Limites configuráveis
         self.limits = {
-            "global": {"requests": 100, "window": 60},  # 100 req/min
-            "auth": {"requests": 10, "window": 60},     # 10 login/register por min
-            "scan": {"requests": 5, "window": 60},      # 5 scans por min
-            "tools": {"requests": 20, "window": 60},    # 20 tool requests por min
+            "global": {"requests": 200, "window": 60},  # 200 req/min (aumentado)
+            "auth": {"requests": 20, "window": 60},     # 20 login/register por min (aumentado)
+            "scan": {"requests": 10, "window": 60},     # 10 scans por min (aumentado)
+            "tools": {"requests": 50, "window": 60},    # 50 tool requests por min (aumentado)
         }
     
     def _cleanup_old_requests(self):
