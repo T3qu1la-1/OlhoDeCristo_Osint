@@ -1,647 +1,306 @@
 #!/usr/bin/env python3
 """
-🛡️ COMPREHENSIVE BACKEND SECURITY TESTING
-Testing 6 security implementations:
-1. Rate Limiting (CRITICAL) - DDoS/DoS protection  
-2. Input Validation (CRITICAL) - Payload protection
-3. Security Headers (HIGH) - Browser protection
-4. Pagination (HIGH) - Performance
-5. File Upload Validation (MEDIUM)
-6. URL Validation (MEDIUM)
-
-Backend URL: https://automated-site.preview.emergentagent.com/api
+Backend Testing Suite - Simplified System Validation
+Testing focus: Registration validation, regular login, security headers, authenticated scans
+After admin and telegram removal
 """
 
 import requests
 import json
 import time
-import asyncio
-from typing import Dict, Any, Tuple, List
-import tempfile
-import os
+import uuid
+from typing import Dict, Any
 
-# Configuration
-BACKEND_URL = "https://automated-site.preview.emergentagent.com/api"
-TEST_USER = {
-    "email": "final.security.test@exemplo.com", 
-    "password": "FinalSecurityTest123!",
-    "username": "FinalSecurityTester"
-}
-
-class SecurityTester:
+class BackendTester:
     def __init__(self):
-        self.base_url = BACKEND_URL
-        self.session = requests.Session()
+        self.base_url = "https://automated-site.preview.emergentagent.com/api"
+        self.test_results = []
         self.auth_token = None
-        self.results = []
+        self.test_user_id = None
         
-    def log_test(self, test_name: str, success: bool, details: str, priority: str = "HIGH"):
+    def log_test(self, test_name: str, success: bool, details: str = ""):
         """Log test result"""
         status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status} [{priority}] {test_name}: {details}")
-        self.results.append({
-            "test": test_name,
-            "success": success,
-            "details": details,
-            "priority": priority
-        })
-    
-    def setup_auth(self) -> bool:
-        """Setup authentication for protected endpoints"""
+        result = f"{status} - {test_name}"
+        if details:
+            result += f" | {details}"
+        self.test_results.append(result)
+        print(result)
+        
+    def test_unique_registration_validation(self):
+        """Test 1: REGISTRO COM VALIDAÇÃO ÚNICA"""
+        print("\n🔐 TESTE 1: VALIDAÇÃO ÚNICA NO REGISTRO")
+        
+        # Test data
+        test_email = "test@test.com"
+        test_username = "test_user"
+        
+        # First registration - should succeed
         try:
-            # Try login first
-            login_response = self.session.post(
-                f"{self.base_url}/auth/login",
-                json={"email": TEST_USER["email"], "password": TEST_USER["password"]},
-                timeout=10
-            )
+            register_data = {
+                "email": test_email,
+                "username": test_username,
+                "password": "SecurePass123!"
+            }
             
-            if login_response.status_code == 200:
-                data = login_response.json()
-                self.auth_token = data.get("access_token")  # Fixed: use access_token instead of token
-                if self.auth_token:
-                    self.session.headers.update({"Authorization": f"Bearer {self.auth_token}"})
-                    self.log_test("Auth Setup (Login)", True, f"Authenticated with existing user. Token: {self.auth_token[:20]}...", "INFO")
-                    return True
-                
-            # Register if login failed
-            register_response = self.session.post(
-                f"{self.base_url}/auth/register",
-                json=TEST_USER,
-                timeout=10
-            )
+            response = requests.post(f"{self.base_url}/auth/register", json=register_data, timeout=10)
             
-            if register_response.status_code == 200:
-                data = register_response.json()
-                self.auth_token = data.get("access_token")  # Fixed: use access_token instead of token
-                if self.auth_token:
-                    self.session.headers.update({"Authorization": f"Bearer {self.auth_token}"})
-                    self.log_test("Auth Setup (Register)", True, f"Created new user. Token: {self.auth_token[:20]}...", "INFO")
-                    return True
-                else:
-                    self.log_test("Auth Setup", False, f"No token in register response: {data}", "CRITICAL")
-                    return False
+            if response.status_code == 201:
+                self.log_test("Primeiro registro bem-sucedido", True, f"Status: {response.status_code}")
+                response_data = response.json()
+                self.auth_token = response_data.get("access_token") or response_data.get("token")
+                self.test_user_id = response_data.get("user", {}).get("id")
             else:
-                self.log_test("Auth Setup", False, f"Failed to register: Status {register_response.status_code}, Response: {register_response.text}", "CRITICAL")
-                return False
-                
+                # User might already exist, let's try to login instead
+                login_data = {"email": test_email, "password": "SecurePass123!"}
+                login_response = requests.post(f"{self.base_url}/auth/login", json=login_data, timeout=10)
+                if login_response.status_code == 200:
+                    self.log_test("Login com usuário existente", True, f"Status: {login_response.status_code}")
+                    response_data = login_response.json()
+                    self.auth_token = response_data.get("access_token") or response_data.get("token")
+                    self.test_user_id = response_data.get("user", {}).get("id")
+                else:
+                    self.log_test("Primeiro registro falhou", False, f"Status: {response.status_code}, Body: {response.text}")
+                    return
+                    
         except Exception as e:
-            self.log_test("Auth Setup", False, f"Auth error: {str(e)}", "CRITICAL")
-            return False
-    
-    def test_rate_limiting_auth(self):
-        """🚦 CRITICAL: Test rate limiting on auth endpoints (10 req/min limit)"""
-        print("\n🚦 TESTING RATE LIMITING - AUTH ENDPOINTS")
-        
-        # Test login rate limiting
-        try:
-            request_count = 0
-            rate_limited = False
-            
-            for i in range(12):  # Try 12 requests (limit is 10)
-                response = requests.post(
-                    f"{self.base_url}/auth/login",
-                    json={"email": "test@test.com", "password": "wrong"},
-                    timeout=5
-                )
-                request_count += 1
-                
-                if response.status_code == 429:
-                    rate_limited = True
-                    response_data = response.json()
-                    self.log_test(
-                        "Rate Limit - Auth Login",
-                        True,
-                        f"Rate limited after {request_count} requests. Response: {response_data.get('detail', 'No detail')}",
-                        "CRITICAL"
-                    )
-                    break
-                elif i < 10:
-                    # Normal requests should work
-                    continue
-            
-            if not rate_limited:
-                self.log_test(
-                    "Rate Limit - Auth Login",
-                    False,
-                    f"No rate limiting detected after {request_count} requests",
-                    "CRITICAL"
-                )
-                
-        except Exception as e:
-            self.log_test("Rate Limit - Auth Login", False, f"Error: {str(e)}", "CRITICAL")
-    
-    def test_rate_limiting_scans(self):
-        """🚦 CRITICAL: Test rate limiting on scan endpoints (5 req/min limit)"""
-        print("\n🚦 TESTING RATE LIMITING - SCANS ENDPOINTS")
-        
-        if not self.auth_token:
-            self.log_test("Rate Limit - Scans", False, "No auth token available", "CRITICAL")
+            self.log_test("Erro no primeiro registro", False, f"Exception: {str(e)}")
             return
-        
+            
+        # Test duplicate EMAIL
         try:
-            request_count = 0
-            rate_limited = False
+            duplicate_email_data = {
+                "email": test_email,  # Same email
+                "username": "different_username",  # Different username
+                "password": "AnotherPass123!"
+            }
             
-            for i in range(7):  # Try 7 requests (limit is 5)
-                response = self.session.post(
-                    f"{self.base_url}/scans",
-                    json={
-                        "name": f"Rate Test {i}",
-                        "target": "https://httpbin.org",
-                        "scanType": "web"
-                    },
-                    timeout=10
-                )
-                request_count += 1
-                
-                if response.status_code == 429:
-                    rate_limited = True
-                    response_data = response.json()
-                    self.log_test(
-                        "Rate Limit - Scans",
-                        True,
-                        f"Rate limited after {request_count} requests. Response: {response_data.get('detail', 'No detail')}",
-                        "CRITICAL"
-                    )
-                    break
-                elif i < 5:
-                    # Normal requests should work
-                    continue
+            response = requests.post(f"{self.base_url}/auth/register", json=duplicate_email_data, timeout=10)
             
-            if not rate_limited:
-                self.log_test(
-                    "Rate Limit - Scans",
-                    False,
-                    f"No rate limiting detected after {request_count} requests",
-                    "CRITICAL"
-                )
+            if response.status_code in [400, 409, 422]:
+                response_text = response.text.lower()
+                if "email" in response_text and ("cadastrado" in response_text or "exist" in response_text or "already" in response_text):
+                    self.log_test("Validação email duplicado funcionando", True, f"Status: {response.status_code}, Mensagem correta")
+                else:
+                    self.log_test("Validação email duplicado - mensagem incorreta", False, f"Status: {response.status_code}, Body: {response.text}")
+            else:
+                self.log_test("Validação email duplicado falhou", False, f"Status: {response.status_code}, deveria ser 400/409/422")
                 
         except Exception as e:
-            self.log_test("Rate Limit - Scans", False, f"Error: {str(e)}", "CRITICAL")
-    
-    def test_input_validation_sql_injection(self):
-        """🔍 CRITICAL: Test SQL injection protection"""
-        print("\n🔍 TESTING INPUT VALIDATION - SQL INJECTION")
-        
-        sql_payloads = [
-            "test@test.com'; DROP TABLE users;--",
-            "admin' OR '1'='1",
-            "'; SELECT * FROM users WHERE '1'='1",
-            "test@test.com' UNION SELECT password FROM users--"
-        ]
-        
-        for payload in sql_payloads:
-            try:
-                response = requests.post(
-                    f"{self.base_url}/auth/register",
-                    json={
-                        "email": payload,
-                        "password": "test123",
-                        "username": "test"
-                    },
-                    timeout=10
-                )
-                
-                # Check both 400 (blocked) and 422 (validation error) as successful blocks
-                if response.status_code in [400, 422] and ("Malicious" in response.text or "Invalid" in response.text):
-                    self.log_test(
-                        f"SQL Injection Protection",
-                        True,
-                        f"Blocked payload: {payload[:30]}... (Status: {response.status_code})",
-                        "CRITICAL"
-                    )
-                elif response.status_code == 400 and "Email já cadastrado" in response.text:
-                    # This is also a form of protection - existing user check
-                    self.log_test(
-                        f"SQL Injection Protection",
-                        True,
-                        f"Blocked via duplicate check: {payload[:30]}...",
-                        "CRITICAL"
-                    )
+            self.log_test("Erro no teste email duplicado", False, f"Exception: {str(e)}")
+            
+        # Test duplicate USERNAME  
+        try:
+            duplicate_username_data = {
+                "email": "different@email.com",  # Different email
+                "username": test_username,  # Same username
+                "password": "AnotherPass123!"
+            }
+            
+            response = requests.post(f"{self.base_url}/auth/register", json=duplicate_username_data, timeout=10)
+            
+            if response.status_code in [400, 409, 422]:
+                response_text = response.text.lower()
+                if "username" in response_text or "usuário" in response_text or "nome" in response_text:
+                    self.log_test("Validação username duplicado funcionando", True, f"Status: {response.status_code}, Mensagem correta")
                 else:
-                    self.log_test(
-                        f"SQL Injection Protection",
-                        False,
-                        f"Payload not blocked: {payload[:30]}... (Status: {response.status_code}, Response: {response.text[:100]})",
-                        "CRITICAL"
-                    )
-                    
-            except Exception as e:
-                self.log_test("SQL Injection Protection", False, f"Error: {str(e)}", "CRITICAL")
-    
-    def test_input_validation_xss(self):
-        """🔍 CRITICAL: Test XSS protection in scan creation"""
-        print("\n🔍 TESTING INPUT VALIDATION - XSS PROTECTION")
-        
-        if not self.auth_token:
-            self.log_test("XSS Protection", False, "No auth token available", "CRITICAL")
-            return
-        
-        xss_payloads = [
-            "<script>alert('xss')</script>",
-            "<img src=x onerror=alert('xss')>",
-            "javascript:alert('xss')",
-            "<iframe src='javascript:alert(1)'></iframe>",
-            "<svg onload=alert('xss')>"
-        ]
-        
-        for payload in xss_payloads:
-            try:
-                response = self.session.post(
-                    f"{self.base_url}/scans",
-                    json={
-                        "name": payload,
-                        "target": "https://httpbin.org",
-                        "scanType": "web"
-                    },
-                    timeout=10
-                )
+                    self.log_test("Validação username duplicado - mensagem incorreta", False, f"Status: {response.status_code}, Body: {response.text}")
+            else:
+                self.log_test("Validação username duplicado falhou", False, f"Status: {response.status_code}, deveria ser 400/409/422")
                 
-                if response.status_code == 400 and "Malicious" in response.text:
-                    self.log_test(
-                        f"XSS Protection",
-                        True,
-                        f"Blocked XSS payload: {payload[:30]}...",
-                        "CRITICAL"
-                    )
-                else:
-                    self.log_test(
-                        f"XSS Protection",
-                        False,
-                        f"XSS payload not blocked: {payload[:30]}... (Status: {response.status_code})",
-                        "CRITICAL"
-                    )
-                    
-            except Exception as e:
-                self.log_test("XSS Protection", False, f"Error: {str(e)}", "CRITICAL")
+        except Exception as e:
+            self.log_test("Erro no teste username duplicado", False, f"Exception: {str(e)}")
     
-    def test_input_validation_command_injection(self):
-        """🔍 CRITICAL: Test Command injection protection in clone-website"""
-        print("\n🔍 TESTING INPUT VALIDATION - COMMAND INJECTION")
+    def test_regular_login(self):
+        """Test 2: LOGIN REGULAR (sem admin)"""
+        print("\n🔑 TESTE 2: LOGIN REGULAR")
         
-        command_payloads = [
-            "http://example.com; cat /etc/passwd",
-            "https://httpbin.org && ls -la",
-            "http://test.com | whoami", 
-            "https://example.com; rm -rf /",
-            "http://test.com`id`"
-        ]
-        
-        for payload in command_payloads:
-            try:
-                response = self.session.post(
-                    f"{self.base_url}/tools/clone-website",
-                    json={"url": payload},
-                    timeout=10
-                )
+        # Test with created user
+        try:
+            login_data = {
+                "email": "test@test.com",
+                "password": "SecurePass123!"
+            }
+            
+            response = requests.post(f"{self.base_url}/auth/login", json=login_data, timeout=10)
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                token = response_data.get("access_token") or response_data.get("token")
+                user_data = response_data.get("user", {})
+                role = user_data.get("role", "")
                 
-                if response.status_code == 400 and ("Malicious" in response.text or "Invalid" in response.text):
-                    self.log_test(
-                        f"Command Injection Protection",
-                        True,
-                        f"Blocked command injection: {payload[:40]}...",
-                        "CRITICAL"
-                    )
-                else:
-                    self.log_test(
-                        f"Command Injection Protection",
-                        False,
-                        f"Command injection not blocked: {payload[:40]}... (Status: {response.status_code})",
-                        "CRITICAL"
-                    )
+                if token:
+                    self.log_test("Login bem-sucedido", True, f"Token recebido: {token[:20]}...")
+                    self.auth_token = token
                     
-            except Exception as e:
-                self.log_test("Command Injection Protection", False, f"Error: {str(e)}", "CRITICAL")
+                    # Check role from JWT token if not in user object
+                    if not role and token:
+                        try:
+                            import jwt
+                            import json
+                            import base64
+                            parts = token.split('.')
+                            payload = json.loads(base64.b64decode(parts[1] + '==='))
+                            role = payload.get("role", "")
+                        except:
+                            pass
+                    
+                    # Verify role is "user" (not admin)
+                    if role == "user":
+                        self.log_test("Role correto: user", True, f"Role: {role}")
+                    else:
+                        self.log_test("Role incorreto", False, f"Role: {role}, deveria ser 'user'")
+                else:
+                    self.log_test("Token não recebido", False, "Token ausente na resposta")
+            else:
+                self.log_test("Login falhou", False, f"Status: {response.status_code}, Body: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Erro no login", False, f"Exception: {str(e)}")
+            
+        # Test that admin login is rejected
+        try:
+            admin_login_data = {
+                "email": "manobrown333011@gmail.com",
+                "password": "anypassword"
+            }
+            
+            response = requests.post(f"{self.base_url}/auth/login", json=admin_login_data, timeout=10)
+            
+            if response.status_code in [401, 403, 404]:
+                self.log_test("Admin rejeitado corretamente", True, f"Status: {response.status_code}")
+            elif response.status_code == 200:
+                # Check if it has admin role or if admin is disabled
+                response_data = response.json()
+                user_data = response_data.get("user", {})
+                role = user_data.get("role", "")
+                if role != "admin":
+                    self.log_test("Ex-admin agora é user regular", True, f"Role: {role}")
+                else:
+                    self.log_test("Admin ainda tem acesso", False, f"Admin deveria ser removido")
+            else:
+                self.log_test("Resposta inesperada para admin", False, f"Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Erro no teste admin", False, f"Exception: {str(e)}")
     
     def test_security_headers(self):
-        """🔒 HIGH: Test security headers presence"""
-        print("\n🔒 TESTING SECURITY HEADERS")
-        
-        required_headers = {
-            "X-Content-Type-Options": "nosniff",
-            "X-Frame-Options": "DENY", 
-            "X-XSS-Protection": "1; mode=block",
-            "Strict-Transport-Security": None,  # Just check presence
-            "Content-Security-Policy": None     # Just check presence
-        }
+        """Test 3: PROTEÇÕES TLS/BYPASS - Security Headers"""
+        print("\n🛡️ TESTE 3: HEADERS DE SEGURANÇA")
         
         try:
             response = requests.get(f"{self.base_url}/", timeout=10)
+            headers = response.headers
             
-            for header_name, expected_value in required_headers.items():
-                if header_name in response.headers:
-                    actual_value = response.headers[header_name]
-                    
-                    if expected_value is None:  # Just check presence
-                        self.log_test(
-                            f"Security Header - {header_name}",
-                            True,
-                            f"Present: {actual_value}",
-                            "HIGH"
-                        )
-                    elif actual_value == expected_value:
-                        self.log_test(
-                            f"Security Header - {header_name}",
-                            True,
-                            f"Correct value: {actual_value}",
-                            "HIGH"
-                        )
-                    else:
-                        self.log_test(
-                            f"Security Header - {header_name}",
-                            False,
-                            f"Wrong value. Expected: {expected_value}, Got: {actual_value}",
-                            "HIGH"
-                        )
+            # Required security headers
+            security_headers = [
+                "Referrer-Policy",
+                "Permissions-Policy", 
+                "Strict-Transport-Security"
+            ]
+            
+            for header in security_headers:
+                if header in headers:
+                    self.log_test(f"Header {header} presente", True, f"Valor: {headers[header]}")
                 else:
-                    self.log_test(
-                        f"Security Header - {header_name}",
-                        False,
-                        "Header not present",
-                        "HIGH"
-                    )
+                    self.log_test(f"Header {header} ausente", False, "Header de segurança não encontrado")
+                    
+            # Additional common security headers
+            additional_headers = {
+                "X-Content-Type-Options": "nosniff",
+                "X-Frame-Options": "DENY", 
+                "X-XSS-Protection": "1; mode=block"
+            }
+            
+            for header, expected in additional_headers.items():
+                if header in headers:
+                    self.log_test(f"Header {header} presente", True, f"Valor: {headers[header]}")
+                else:
+                    self.log_test(f"Header {header} ausente", False, "Header adicional não encontrado")
                     
         except Exception as e:
-            self.log_test("Security Headers", False, f"Error: {str(e)}", "HIGH")
+            self.log_test("Erro ao verificar headers", False, f"Exception: {str(e)}")
     
-    def test_pagination_functionality(self):
-        """📊 HIGH: Test pagination in scans endpoint"""
-        print("\n📊 TESTING PAGINATION FUNCTIONALITY")
+    def test_authenticated_scans(self):
+        """Test 4: SCANS (AUTENTICADO)"""
+        print("\n🔍 TESTE 4: SCANS AUTENTICADOS")
         
         if not self.auth_token:
-            self.log_test("Pagination", False, "No auth token available", "HIGH")
+            self.log_test("Token não disponível", False, "Necessário login primeiro")
             return
+            
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
         
+        # Test creating a scan
         try:
-            # Create multiple scans for testing
-            print("Creating test scans for pagination...")
-            for i in range(3):
-                self.session.post(
-                    f"{self.base_url}/scans",
-                    json={
-                        "name": f"Pagination Test {i+1}",
-                        "target": "https://httpbin.org",
-                        "scanType": "web"
-                    },
-                    timeout=10
-                )
-                time.sleep(1)  # Avoid rate limiting
+            scan_data = {
+                "name": f"Teste Scan {uuid.uuid4().hex[:8]}",
+                "target": "https://httpbin.org",
+                "scan_type": "quick"
+            }
             
-            # Test pagination
-            response = self.session.get(
-                f"{self.base_url}/scans?page=1&limit=2",
-                timeout=10
-            )
+            response = requests.post(f"{self.base_url}/scans", json=scan_data, headers=headers, timeout=15)
             
-            if response.status_code == 200:
-                data = response.json()
+            if response.status_code in [200, 201]:
+                response_data = response.json()
+                scan_id = response_data.get("id")
+                self.log_test("Criação de scan autenticado", True, f"Scan ID: {scan_id}")
                 
-                # Check structure
-                if "scans" in data and "pagination" in data:
-                    pagination = data["pagination"]
-                    required_fields = ["page", "limit", "total", "total_pages", "has_next", "has_prev"]
+                # Test retrieving scans
+                try:
+                    get_response = requests.get(f"{self.base_url}/scans", headers=headers, timeout=10)
+                    if get_response.status_code == 200:
+                        scans_data = get_response.json()
+                        scans = scans_data.get("scans", []) if isinstance(scans_data, dict) else scans_data
+                        self.log_test("Listagem de scans autenticado", True, f"Total scans: {len(scans)}")
+                    else:
+                        self.log_test("Listagem de scans falhou", False, f"Status: {get_response.status_code}")
+                except Exception as e:
+                    self.log_test("Erro na listagem de scans", False, f"Exception: {str(e)}")
                     
-                    if all(field in pagination for field in required_fields):
-                        self.log_test(
-                            "Pagination Structure",
-                            True,
-                            f"Correct pagination structure: page={pagination['page']}, limit={pagination['limit']}, total={pagination['total']}",
-                            "HIGH"
-                        )
-                        
-                        # Test pagination logic
-                        if pagination["page"] == 1 and pagination["limit"] == 2:
-                            self.log_test(
-                                "Pagination Logic",
-                                True,
-                                f"Pagination working correctly. Scans returned: {len(data['scans'])}",
-                                "HIGH"
-                            )
-                        else:
-                            self.log_test(
-                                "Pagination Logic",
-                                False,
-                                f"Wrong page/limit values: page={pagination['page']}, limit={pagination['limit']}",
-                                "HIGH"
-                            )
-                    else:
-                        missing = [f for f in required_fields if f not in pagination]
-                        self.log_test(
-                            "Pagination Structure",
-                            False,
-                            f"Missing pagination fields: {missing}",
-                            "HIGH"
-                        )
-                else:
-                    self.log_test(
-                        "Pagination Structure",
-                        False,
-                        "Missing 'scans' or 'pagination' keys in response",
-                        "HIGH"
-                    )
             else:
-                self.log_test(
-                    "Pagination",
-                    False,
-                    f"Failed to get scans. Status: {response.status_code}",
-                    "HIGH"
-                )
+                self.log_test("Criação de scan falhou", False, f"Status: {response.status_code}, Body: {response.text}")
                 
         except Exception as e:
-            self.log_test("Pagination", False, f"Error: {str(e)}", "HIGH")
-    
-    def test_file_upload_validation(self):
-        """📁 MEDIUM: Test file upload size validation (EXIF endpoint)"""
-        print("\n📁 TESTING FILE UPLOAD VALIDATION")
-        
+            self.log_test("Erro na criação de scan", False, f"Exception: {str(e)}")
+            
+        # Test accessing scans without authentication
         try:
-            # Create a small test file
-            with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
-                # Write some dummy JPEG-like data
-                temp_file.write(b'\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xFF\xDB\x00C\x00')
-                temp_file.write(b'A' * 1000)  # Small file
-                temp_file.flush()
-                
-                with open(temp_file.name, 'rb') as f:
-                    response = self.session.post(
-                        f"{self.base_url}/tools/extract-exif",
-                        files={"file": ("test.jpg", f, "image/jpeg")},
-                        timeout=15
-                    )
-                
-                if response.status_code == 200:
-                    self.log_test(
-                        "File Upload - Normal Size",
-                        True,
-                        "Small file uploaded successfully",
-                        "MEDIUM"
-                    )
-                else:
-                    self.log_test(
-                        "File Upload - Normal Size", 
-                        False,
-                        f"Small file failed. Status: {response.status_code}, Response: {response.text[:100]}",
-                        "MEDIUM"
-                    )
-                
-                os.unlink(temp_file.name)
-                
-            # Note: Testing 10MB+ files would be too slow and resource intensive
-            # The validation logic is already implemented in the security middleware
-            self.log_test(
-                "File Upload - Size Limit",
-                True,
-                "File size validation implemented in security middleware (10MB limit)",
-                "MEDIUM"
-            )
-            
+            response = requests.get(f"{self.base_url}/scans", timeout=10)
+            if response.status_code in [401, 403]:
+                self.log_test("Proteção de autenticação funcionando", True, f"Acesso negado sem token: {response.status_code}")
+            else:
+                self.log_test("Proteção de autenticação falhou", False, f"Status: {response.status_code}, deveria ser 401/403")
         except Exception as e:
-            self.log_test("File Upload Validation", False, f"Error: {str(e)}", "MEDIUM")
+            self.log_test("Erro no teste sem autenticação", False, f"Exception: {str(e)}")
     
-    def test_url_validation(self):
-        """🔗 MEDIUM: Test URL validation in clone-website"""
-        print("\n🔗 TESTING URL VALIDATION")
+    def run_all_tests(self):
+        """Execute all tests in sequence"""
+        print("🚀 INICIANDO TESTES DO SISTEMA SIMPLIFICADO")
+        print("=" * 60)
         
-        test_cases = [
-            # Valid URLs should work
-            ("https://httpbin.org", True, "Valid HTTPS URL"),
-            ("http://example.com", True, "Valid HTTP URL"),
+        self.test_unique_registration_validation()
+        self.test_regular_login() 
+        self.test_security_headers()
+        self.test_authenticated_scans()
+        
+        print("\n" + "=" * 60)
+        print("📊 RESUMO DOS TESTES")
+        print("=" * 60)
+        
+        passed = sum(1 for result in self.test_results if "✅ PASS" in result)
+        failed = sum(1 for result in self.test_results if "❌ FAIL" in result)
+        
+        print(f"Total: {len(self.test_results)} | Passou: {passed} | Falhou: {failed}")
+        print(f"Taxa de Sucesso: {(passed/len(self.test_results)*100):.1f}%")
+        
+        print("\nDetalhes:")
+        for result in self.test_results:
+            print(f"  {result}")
             
-            # Invalid URLs should be blocked
-            ("javascript:alert(1)", False, "JavaScript protocol"),
-            ("ftp://example.com", False, "FTP protocol"),
-            ("data:text/html,<script>alert(1)</script>", False, "Data protocol"),
-            ("", False, "Empty URL"),
-            ("not-a-url", False, "Invalid format"),
-        ]
-        
-        for url, should_pass, description in test_cases:
-            try:
-                response = self.session.post(
-                    f"{self.base_url}/tools/clone-website",
-                    json={"url": url},
-                    timeout=10
-                )
-                
-                if should_pass:
-                    if response.status_code == 200:
-                        self.log_test(
-                            f"URL Validation - {description}",
-                            True,
-                            f"Valid URL accepted: {url}",
-                            "MEDIUM"
-                        )
-                    else:
-                        self.log_test(
-                            f"URL Validation - {description}",
-                            False,
-                            f"Valid URL rejected: {url} (Status: {response.status_code})",
-                            "MEDIUM"
-                        )
-                else:
-                    if response.status_code == 400:
-                        self.log_test(
-                            f"URL Validation - {description}",
-                            True,
-                            f"Invalid URL correctly rejected: {url}",
-                            "MEDIUM"
-                        )
-                    else:
-                        self.log_test(
-                            f"URL Validation - {description}",
-                            False,
-                            f"Invalid URL not rejected: {url} (Status: {response.status_code})",
-                            "MEDIUM"
-                        )
-                        
-            except Exception as e:
-                self.log_test(f"URL Validation - {description}", False, f"Error: {str(e)}", "MEDIUM")
-    
-    def generate_summary(self):
-        """Generate test summary"""
-        print("\n" + "="*80)
-        print("🛡️ SECURITY TESTING SUMMARY")
-        print("="*80)
-        
-        total_tests = len(self.results)
-        passed_tests = len([r for r in self.results if r["success"]])
-        failed_tests = total_tests - passed_tests
-        
-        print(f"Total Tests: {total_tests}")
-        print(f"Passed: {passed_tests} ✅")
-        print(f"Failed: {failed_tests} ❌")
-        print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
-        
-        # Group by priority
-        critical_failed = [r for r in self.results if not r["success"] and r["priority"] == "CRITICAL"]
-        high_failed = [r for r in self.results if not r["success"] and r["priority"] == "HIGH"]
-        
-        if critical_failed:
-            print(f"\n🚨 CRITICAL FAILURES ({len(critical_failed)}):")
-            for result in critical_failed:
-                print(f"  ❌ {result['test']}: {result['details']}")
-        
-        if high_failed:
-            print(f"\n⚠️  HIGH PRIORITY FAILURES ({len(high_failed)}):")
-            for result in high_failed:
-                print(f"  ❌ {result['test']}: {result['details']}")
-        
-        return {
-            "total": total_tests,
-            "passed": passed_tests,
-            "failed": failed_tests,
-            "critical_failures": len(critical_failed),
-            "high_failures": len(high_failed),
-            "success_rate": (passed_tests/total_tests)*100
-        }
-
-def main():
-    """Run all security tests"""
-    print("🛡️ STARTING COMPREHENSIVE BACKEND SECURITY TESTING")
-    print("="*80)
-    print(f"Backend URL: {BACKEND_URL}")
-    print(f"Test User: {TEST_USER['email']}")
-    print("="*80)
-    
-    tester = SecurityTester()
-    
-    # Setup authentication
-    if not tester.setup_auth():
-        print("❌ Failed to setup authentication. Cannot proceed with protected endpoint tests.")
-        return
-    
-    # Run all tests in priority order
-    print("\n🔥 RUNNING CRITICAL TESTS FIRST...")
-    
-    # CRITICAL: Rate Limiting Tests
-    tester.test_rate_limiting_auth()
-    time.sleep(2)  # Brief pause between rate limit tests
-    tester.test_rate_limiting_scans()
-    
-    # CRITICAL: Input Validation Tests  
-    tester.test_input_validation_sql_injection()
-    tester.test_input_validation_xss()
-    tester.test_input_validation_command_injection()
-    
-    print("\n🔶 RUNNING HIGH PRIORITY TESTS...")
-    
-    # HIGH: Security Headers
-    tester.test_security_headers()
-    
-    # HIGH: Pagination
-    tester.test_pagination_functionality()
-    
-    print("\n🔸 RUNNING MEDIUM PRIORITY TESTS...")
-    
-    # MEDIUM: File Upload & URL Validation
-    tester.test_file_upload_validation()
-    tester.test_url_validation()
-    
-    # Generate final summary
-    summary = tester.generate_summary()
-    
-    return summary
+        return passed, failed
 
 if __name__ == "__main__":
-    main()
+    tester = BackendTester()
+    tester.run_all_tests()

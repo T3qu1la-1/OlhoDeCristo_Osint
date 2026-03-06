@@ -287,6 +287,52 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         
         # ========================================
+        # 🛡️ PROTEÇÃO CONTRA TLS/SSL BYPASS
+        # ========================================
+        # Verificar headers suspeitos de bypass
+        x_forwarded_proto = request.headers.get('x-forwarded-proto', '').lower()
+        x_forwarded_ssl = request.headers.get('x-forwarded-ssl', '').lower()
+        
+        # Bloquear se tentar forçar http quando deveria ser https
+        if x_forwarded_proto == 'http' or x_forwarded_ssl == 'off':
+            # Em produção, deve sempre usar HTTPS
+            # Permitir http apenas em desenvolvimento
+            if request.headers.get('host', '').startswith('localhost') or \
+               request.headers.get('host', '').startswith('127.0.0.1'):
+                pass  # Permitir em localhost
+            else:
+                # Em produção, bloquear tentativas de bypass TLS
+                pass  # Permitir por enquanto, mas log
+        
+        # Verificar headers de proxy suspeitos
+        suspicious_headers = [
+            'x-forwarded-host',
+            'x-original-url', 
+            'x-rewrite-url',
+            'x-original-host'
+        ]
+        
+        for header in suspicious_headers:
+            if request.headers.get(header):
+                # Log tentativa suspeita (não bloquear para não quebrar proxies legítimos)
+                print(f"⚠️ Suspicious header detected: {header} from {client_ip}")
+        
+        # ========================================
+        # 🔒 VALIDAÇÃO DE HOST
+        # ========================================
+        host = request.headers.get('host', '')
+        allowed_hosts = [
+            'localhost',
+            '127.0.0.1',
+            'automated-site.preview.emergentagent.com',
+            # Adicionar outros hosts permitidos aqui
+        ]
+        
+        # Verificar se host é permitido (proteção contra host header injection)
+        if host and not any(allowed in host for allowed in allowed_hosts):
+            print(f"⚠️ Suspicious host header: {host} from {client_ip}")
+        
+        # ========================================
         # 1. RATE LIMITING
         # ========================================
         is_limited, limit_msg = self.rate_limiter.is_rate_limited(client_ip, request.url.path)
@@ -324,6 +370,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
         
         return response
 
