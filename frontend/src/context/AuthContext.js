@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const AuthContext = createContext();
 
@@ -36,9 +37,12 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', access_token);
       setToken(access_token);
       setUser(userData);
+      toast.success(`Bem-vindo de volta, ${userData.username}! 🎉`);
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || 'Erro ao fazer login' };
+      const errorMsg = error.response?.data?.detail || 'Erro ao fazer login';
+      toast.error(`❌ ${errorMsg}`);
+      return { success: false, error: errorMsg };
     }
   };
 
@@ -49,9 +53,12 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', access_token);
       setToken(access_token);
       setUser(userData);
+      toast.success(`Conta criada com sucesso! Bem-vindo, ${userData.username}! 🚀`);
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || 'Erro ao registrar' };
+      const errorMsg = error.response?.data?.detail || 'Erro ao registrar';
+      toast.error(`❌ ${errorMsg}`);
+      return { success: false, error: errorMsg };
     }
   };
 
@@ -59,6 +66,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
+    toast.info('Logout realizado com sucesso. Até logo! 👋');
   };
 
   return (

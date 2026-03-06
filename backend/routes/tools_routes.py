@@ -10,8 +10,12 @@ import aiohttp
 import asyncio
 from bs4 import BeautifulSoup
 from typing import List, Dict
+from security_middleware import validate_url_input, security_validator
 
 router = APIRouter()
+
+# 🛡️ Tamanho máximo de arquivo (10MB)
+MAX_FILE_SIZE = 10 * 1024 * 1024
 
 def extract_exif(image_data):
     """Extract EXIF data from image"""
@@ -60,9 +64,23 @@ def extract_exif(image_data):
 
 @router.post("/extract-exif")
 async def extract_exif_endpoint(file: UploadFile = File(...)):
-    """Extract EXIF metadata from uploaded image"""
+    """Extract EXIF metadata from uploaded image with security validation"""
     try:
+        # 🛡️ Validar tipo de arquivo
+        allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/tiff"]
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail=f"Tipo de arquivo não permitido: {file.content_type}")
+        
+        # 🛡️ Validar nome do arquivo
+        is_valid, error = security_validator.validate_filename(file.filename)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error)
+        
+        # 🛡️ Validar tamanho
         contents = await file.read()
+        if len(contents) > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail=f"Arquivo muito grande (máximo {MAX_FILE_SIZE / 1024 / 1024}MB)")
+        
         exif_data = extract_exif(contents)
         
         # Get image basic info
@@ -85,37 +103,60 @@ async def extract_exif_endpoint(file: UploadFile = File(...)):
         }
         
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/clone-website")
 async def clone_website(data: dict):
-    """Clone website HTML"""
+    """Clone website HTML with security validation"""
     try:
         url = data.get("url")
         if not url:
             raise HTTPException(status_code=400, detail="URL is required")
         
+        # 🛡️ Validar URL contra payloads maliciosos
+        validated_url = validate_url_input(url)
+        
         # Fetch the website
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }
-        response = requests.get(url, headers=headers, timeout=10)
+        
+        # 🛡️ Timeout de 10 segundos para evitar requisições longas
+        response = requests.get(validated_url, headers=headers, timeout=10)
         response.raise_for_status()
+        
+        # 🛡️ Limitar tamanho da resposta (5MB)
+        max_response_size = 5 * 1024 * 1024
+        if len(response.content) > max_response_size:
+            raise HTTPException(status_code=400, detail="Website content too large (max 5MB)")
         
         return {
             "html": response.text,
             "status": response.status_code,
             "size": len(response.text)
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/analyze-face")
 async def analyze_face(file: UploadFile = File(...)):
-    """Analyze face in image - placeholder for face-api.js integration"""
+    """Analyze face in image with security validation"""
     try:
+        # 🛡️ Validar tipo de arquivo
+        allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/gif"]
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail=f"Tipo de arquivo não permitido: {file.content_type}")
+        
+        # 🛡️ Validar tamanho
         contents = await file.read()
+        if len(contents) > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail=f"Arquivo muito grande (máximo {MAX_FILE_SIZE / 1024 / 1024}MB)")
+        
         image = Image.open(io.BytesIO(contents))
         
         # This would integrate with face-api.js or similar

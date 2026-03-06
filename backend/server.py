@@ -16,6 +16,9 @@ import asyncio
 from routes.auth_routes import router as auth_router
 from auth import get_current_user
 
+# Import security middleware
+from security_middleware import SecurityMiddleware, validate_text_input, validate_url_input
+
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -137,10 +140,16 @@ async def get_status_checks():
 @api_router.post("/scans", response_model=Scan)
 async def create_scan(scan_input: ScanCreate, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
     """Criar novo scan (autenticado)"""
+    
+    # 🛡️ Validar inputs contra payloads maliciosos
+    validated_name = validate_text_input(scan_input.name, "scan name", max_length=200)
+    validated_target = validate_url_input(scan_input.target)
+    validated_scan_type = validate_text_input(scan_input.scanType, "scan type", max_length=50)
+    
     scan = Scan(
-        name=scan_input.name,
-        target=scan_input.target,
-        scanType=scan_input.scanType,
+        name=validated_name,
+        target=validated_target,
+        scanType=validated_scan_type,
         user_id=current_user["id"],  # Associar ao usuário autenticado
         status="pending",
         startedAt=datetime.now(timezone.utc)
@@ -219,10 +228,45 @@ async def run_scan(scan_id: str, target: str, scan_type: str):
             {"$set": {"status": "failed", "currentTask": f"Error: {str(e)}"}}
         )
 
-@api_router.get("/scans", response_model=List[Scan])
-async def get_scans(current_user: dict = Depends(get_current_user)):
-    """Listar scans do usuário autenticado"""
-    scans = await db.scans.find({"user_id": current_user["id"]}, {"_id": 0}).sort("createdAt", -1).to_list(100)
+@api_router.get("/scans")
+async def get_scans(
+    current_user: dict = Depends(get_current_user),
+    page: int = 1,
+    limit: int = 20,
+    sort_by: str = "createdAt",
+    order: str = "desc"
+):
+    """
+    Listar scans do usuário autenticado com paginação
+    
+    Args:
+        page: Número da página (default: 1)
+        limit: Itens por página (default: 20, max: 100)
+        sort_by: Campo para ordenação (default: createdAt)
+        order: Ordem (asc/desc, default: desc)
+    """
+    # 🛡️ Validar parâmetros
+    page = max(1, min(page, 10000))  # Entre 1 e 10000
+    limit = max(1, min(limit, 100))  # Entre 1 e 100
+    sort_order = -1 if order == "desc" else 1
+    
+    # Campos permitidos para ordenação
+    allowed_sort_fields = ["createdAt", "name", "status", "target"]
+    sort_field = sort_by if sort_by in allowed_sort_fields else "createdAt"
+    
+    # Calcular skip
+    skip = (page - 1) * limit
+    
+    # Contar total de scans
+    total_scans = await db.scans.count_documents({"user_id": current_user["id"]})
+    
+    # Buscar scans com paginação
+    scans = await db.scans.find(
+        {"user_id": current_user["id"]},
+        {"_id": 0}
+    ).sort(sort_field, sort_order).skip(skip).limit(limit).to_list(limit)
+    
+    # Processar datas
     for scan in scans:
         if scan.get('startedAt') and isinstance(scan['startedAt'], str):
             scan['startedAt'] = datetime.fromisoformat(scan['startedAt'])
@@ -230,7 +274,21 @@ async def get_scans(current_user: dict = Depends(get_current_user)):
             scan['completedAt'] = datetime.fromisoformat(scan['completedAt'])
         if isinstance(scan['createdAt'], str):
             scan['createdAt'] = datetime.fromisoformat(scan['createdAt'])
-    return scans
+    
+    # Calcular metadados de paginação
+    total_pages = (total_scans + limit - 1) // limit  # Ceiling division
+    
+    return {
+        "scans": scans,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total_scans,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_prev": page > 1
+        }
+    }
 
 @api_router.get("/scans/{scan_id}", response_model=Scan)
 async def get_scan(scan_id: str, current_user: dict = Depends(get_current_user)):
@@ -294,6 +352,11 @@ async def websocket_endpoint(websocket: WebSocket):
 
 # Include the router in the main app
 app.include_router(api_router)
+
+# ========================================
+# 🛡️ SECURITY MIDDLEWARE - DDoS/DoS/Payload Protection
+# ========================================
+app.add_middleware(SecurityMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

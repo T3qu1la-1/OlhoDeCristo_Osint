@@ -4,6 +4,7 @@ from datetime import datetime
 import uuid
 from auth import hash_password, verify_password, create_access_token, get_current_user
 from models.user import UserCreate, UserLogin, UserResponse, TokenResponse
+from security_middleware import validate_email_input, validate_text_input
 import os
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -15,9 +16,20 @@ users_collection = db['users']
 
 @router.post("/register", response_model=TokenResponse)
 async def register(user: UserCreate):
-    """Register new user"""
+    """Register new user with input validation"""
+    
+    # 🛡️ Validar inputs contra payloads maliciosos
+    validated_email = validate_email_input(user.email)
+    validated_username = validate_text_input(user.username, "username", max_length=100)
+    
+    # Validar senha (comprimento mínimo)
+    if len(user.password) < 6:
+        raise HTTPException(status_code=400, detail="Senha deve ter no mínimo 6 caracteres")
+    if len(user.password) > 128:
+        raise HTTPException(status_code=400, detail="Senha muito longa (máximo 128 caracteres)")
+    
     # Check if user already exists
-    existing_user = await users_collection.find_one({"email": user.email})
+    existing_user = await users_collection.find_one({"email": validated_email})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
     
@@ -27,8 +39,8 @@ async def register(user: UserCreate):
     
     user_dict = {
         "id": user_id,
-        "email": user.email,
-        "username": user.username,
+        "email": validated_email,
+        "username": validated_username,
         "hashed_password": hash_password(user.password),
         "created_at": now,
         "last_login": now
@@ -37,24 +49,28 @@ async def register(user: UserCreate):
     await users_collection.insert_one(user_dict)
     
     # Create access token
-    access_token = create_access_token(data={"sub": user_id, "email": user.email})
+    access_token = create_access_token(data={"sub": user_id, "email": validated_email})
     
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user": {
             "id": user_id,
-            "email": user.email,
-            "username": user.username,
+            "email": validated_email,
+            "username": validated_username,
             "created_at": now
         }
     }
 
 @router.post("/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
-    """Login user"""
+    """Login user with input validation"""
+    
+    # 🛡️ Validar inputs
+    validated_email = validate_email_input(credentials.email)
+    
     # Find user
-    user = await users_collection.find_one({"email": credentials.email})
+    user = await users_collection.find_one({"email": validated_email})
     if not user:
         raise HTTPException(status_code=401, detail="Email ou senha incorretos")
     

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Toaster } from './components/ui/sonner';
+import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -109,9 +111,17 @@ const AppContent = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+        <Toaster 
+          position="top-right" 
+          richColors 
+          closeButton 
+          duration={4000}
+        />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
